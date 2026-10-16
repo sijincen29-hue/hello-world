@@ -100,8 +100,46 @@ fence(-6.4,5.5,'x',4.2);fence(.5,5.5,'x',6);fence(6.6,-5.5,'z',11);fence(-6.5,-5
 // Flowers, little stones, mailbox and an outdoor bench.
 for(let i=0;i<36;i++){const x=-6+((i*3.71)%12),z=4.5+((i*1.31)%.55);if(x>2&&x<6||x> -2&&x<.5)continue;cyl(x,.28,z,.018,.3,'#799461');for(let k=0;k<5;k++)ball(x+Math.cos(k*1.256)*.075,.46,z+Math.sin(k*1.256)*.075,.065,.035,.065,i%2?'#f0dab2':'#dca9a0');ball(x,.48,z,.035,.03,.035,'#c5a366')}
 rounded(-3, .61,2.7,1.5,.16,.55,'#bd9465');for(let x of [-3.55,-2.45])box(x,.35,2.7,.1,.55,.4,'#a78054');box(-3,1,2.95,1.5,.5,.1,'#bd9465');cyl(.5,.68,4.9,.07,1.2,'#b28a60');rounded(.5,1.25,4.9,.6,.5,.6,'#8ca28a');box(.5,1.27,5.21,.38,.045,.025,'#526852');
-// Restored soft, simple animal residents from the previous design.
-function resident(kind,x,z){const g=new T.Group();g.position.set(x,.22,z);scene.add(g);const rabbit=kind==='bunny',fur=rabbit?'#f0dfc4':'#b78a61';ball(0,.55,0,.37,.46,.28,rabbit?'#d5a6a0':'#91a6a0',g);ball(0,1.12,0,.43,.41,.35,fur,g);for(let side of [-1,1]){ball(side*.19,.13,.02,.15,.18,.2,fur,g);ball(side*.38,.57,0,.12,.26,.13,fur,g);if(rabbit){ball(side*.22,1.67,0,.13,.43,.13,fur,g);ball(side*.22,1.68,.11,.065,.3,.025,'#d9b3a9',g)}else{ball(side*.32,1.45,0,.18,.18,.12,fur,g);ball(side*.32,1.46,.1,.1,.1,.025,'#dcc09a',g)}ball(side*.15,1.17,.324,.043,.058,.028,'#403e36',g);ball(side*.25,1.03,.31,.07,.035,.025,'#d6a092',g)}ball(0,1.01,.31,.18,.12,.09,rabbit?'#fff2dc':'#e5c8a4',g);ball(0,1.06,.395,.045,.03,.025,'#755543',g);if(!rabbit){box(0,.71,.272,.35,.04,.035,'#e6d3a5',g);for(let i=0;i<2;i++)ball(0,.52+i*.13,.28,.025,.025,.025,'#e8d7b6',g)}else ball(.3,1.45,.16,.12,.07,.06,'#d0a86b',g);return g}
+// Keep the previous resident silhouette; small nested pivots give it gentle motion.
+function resident(kind,x,z){
+  const g=new T.Group();g.position.set(x,.22,z);scene.add(g);
+  const rabbit=kind==='bunny';
+  const fur=rabbit?'#f0dfc4':'#b78a61';
+  const clothes=rabbit?'#d5a6a0':'#91a6a0';
+  const arms=[],feet=[];
+  ball(0,.55,0,.37,.46,.28,clothes,g);
+  ball(0,.22,-.27,rabbit?.13:.11,.12,.13,fur,g);
+  const head=new T.Group();head.position.y=1.12;g.add(head);
+  ball(0,0,0,.43,.41,.35,fur,head);
+  for(const side of [-1,1]){
+    const foot=new T.Group();foot.position.set(side*.19,.13,.02);g.add(foot);
+    ball(0,0,0,.15,.18,.2,fur,foot);feet.push(foot);
+    const arm=new T.Group();arm.position.set(side*.36,.77,0);g.add(arm);
+    ball(side*.02,-.2,0,.12,.26,.13,fur,arm);
+    ball(0,-.07,0,.13,.13,.135,clothes,arm);arms.push(arm);
+    if(rabbit){
+      const ear=new T.Group();ear.position.set(side*.22,.3,0);ear.rotation.z=-side*.09;head.add(ear);
+      ball(0,.25,0,.13,.43,.13,fur,ear);
+      ball(0,.26,.11,.065,.3,.025,'#d9b3a9',ear);
+    }else{
+      ball(side*.32,.33,0,.18,.18,.12,fur,head);
+      ball(side*.32,.34,.1,.1,.1,.025,'#dcc09a',head);
+    }
+    ball(side*.15,.05,.324,.043,.058,.028,'#403e36',head);
+    ball(side*.15+.013,.073,.349,.011,.015,.007,'#fff8ee',head);
+    ball(side*.25,-.09,.31,.07,.035,.025,'#d6a092',head);
+  }
+  ball(0,-.11,.31,.18,.12,.09,rabbit?'#fff2dc':'#e5c8a4',head);
+  ball(0,-.06,.395,.045,.03,.025,'#755543',head);
+  if(rabbit){
+    ball(.3,.33,.16,.12,.07,.06,'#d0a86b',head);
+  }else{
+    box(0,.71,.272,.35,.04,.035,'#e6d3a5',g);
+    for(let i=0;i<2;i++)ball(0,.52+i*.13,.28,.025,.025,.025,'#e8d7b6',g);
+  }
+  g.userData={head,arms,feet};
+  return g;
+}
 const bunny=resident('bunny',WAYPOINTS.garden.x,WAYPOINTS.garden.z),bear=resident('bear',WAYPOINTS.living.x,WAYPOINTS.living.z);bear.position.y=WAYPOINTS.living.y;
 const life={};
 for(const [kind,group] of Object.entries({bunny,bear})){
@@ -146,6 +184,6 @@ document.querySelector('#motion').onclick=e=>{paused=!paused;e.currentTarget.inn
 document.querySelector('#light').onclick=()=>{dusk=!dusk;sun.color.set(dusk?'#ffb577':'#ffe3ae');sun.intensity=dusk?2.4:4;hemi.intensity=dusk?1.4:2.5;scene.background.set(dusk?'#e9dfd2':'#f5f3e9');document.body.style.background=dusk?'#e9dfd2':'#f5f3e9';document.querySelector('#time-label').textContent=dusk?'温柔黄昏':'暖暖午后';document.querySelector('#light').innerHTML=dusk?'☼ <span>切换午后</span>':'☼ <span>切换黄昏</span>'};
 for(const b of document.querySelectorAll('[data-resident]'))b.onclick=()=>{selected=b.dataset.resident;camera.clearViewOffset();for(const [kind,state] of Object.entries(life))state.marker.visible=kind===selected;displayLife(selected)};
 document.querySelector('#reset').onclick=()=>{selected=null;for(const state of Object.values(life))state.marker.visible=false;cameraAim.set(0,0,0);camera.zoom=1;camera.position.set(16,23,24);camera.lookAt(0,0,0);resize();document.querySelector('#note').textContent='今天也是适合发呆的好天气。'};
-renderer.setAnimationLoop(()=>{const dt=Math.min(clock.getDelta(),.05);if(!paused){elapsed+=dt;for(const state of Object.values(life))updateLife(state,dt)}for(const [kind,state] of Object.entries(life)){const phase=elapsed*(state.moving?10:2)+(kind==='bear'?1:0),pace=state.moving?.03:.015;state.group.scale.y=1+Math.sin(phase)*pace}for(let i=0;i<crowns.length;i++)crowns[i].rotation.z=Math.sin(elapsed*.7+i)*.012;if(selected){const p=life[selected].group.position;cameraFocus.set(p.x,p.y+1,p.z)}else cameraFocus.set(0,0,0);cameraAim.lerp(cameraFocus,Math.min(1,dt*2.5));cameraHome.set(16+cameraAim.x,23+cameraAim.y,24+cameraAim.z);camera.position.copy(cameraHome);camera.lookAt(cameraAim);camera.zoom+=((selected?2.05:1)-camera.zoom)*Math.min(1,dt*2.5);camera.updateProjectionMatrix();renderer.render(scene,camera)});
+renderer.setAnimationLoop(()=>{const dt=Math.min(clock.getDelta(),.05);if(!paused){elapsed+=dt;for(const state of Object.values(life))updateLife(state,dt)}for(const [kind,state] of Object.entries(life)){const phase=elapsed*(state.moving?10:2)+(kind==='bear'?1:0),pace=state.moving?.03:.015;state.group.scale.y=1+Math.sin(phase)*pace;const {head,arms,feet}=state.group.userData;head.rotation.z=Math.sin(elapsed*1.3+(kind==='bear'?1:0))*.035;head.rotation.y=Math.sin(elapsed*.65+(kind==='bear'?1.4:0))*.08;for(let i=0;i<2;i++){const swing=state.moving?Math.sin(phase+i*Math.PI)*.26:Math.sin(elapsed*1.5+i*Math.PI)*.025;arms[i].rotation.x=swing;feet[i].rotation.x=state.moving?-swing*.7:0}}for(let i=0;i<crowns.length;i++)crowns[i].rotation.z=Math.sin(elapsed*.7+i)*.012;if(selected){const p=life[selected].group.position;cameraFocus.set(p.x,p.y+1,p.z)}else cameraFocus.set(0,0,0);cameraAim.lerp(cameraFocus,Math.min(1,dt*2.5));cameraHome.set(16+cameraAim.x,23+cameraAim.y,24+cameraAim.z);camera.position.copy(cameraHome);camera.lookAt(cameraAim);camera.zoom+=((selected?2.05:1)-camera.zoom)*Math.min(1,dt*2.5);camera.updateProjectionMatrix();renderer.render(scene,camera)});
 
 
