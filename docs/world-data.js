@@ -19,7 +19,7 @@ export const WAYPOINTS = {
   computerDoor:{x:-2.5,z:-.05,y:.66,neighbors:['study','computer']},
   computer:{x:-3.65,z:.55,y:.66,neighbors:['computerDoor','bedroomDoor']},
   livingDoor:{x:.5,z:-.05,y:.66,neighbors:['study','living']},
-  living:{x:2.9,z:.78,y:.66,neighbors:['livingDoor','kitchenDoor']},
+  living:{x:2.3,z:.82,y:.66,neighbors:['livingDoor','kitchenDoor']},
   bedroomDoor:{x:-4,z:-1.65,y:.66,neighbors:['computer','bedroom']},
   bedroom:{x:-4,z:-2.38,y:.66,neighbors:['bedroomDoor']},
   bathDoor:{x:-1,z:-1.65,y:.66,neighbors:['study','bathroom']},
