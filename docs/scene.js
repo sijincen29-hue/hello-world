@@ -1,4 +1,4 @@
-import * as T from './three.module.js';
+import * as T from 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js';
 const host=document.querySelector('#scene');
 const scene=new T.Scene();scene.background=new T.Color('#f5f3e9');
 const renderer=new T.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.3;host.appendChild(renderer.domElement);
