@@ -1,5 +1,5 @@
 import * as T from 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js';
-import {ROOMS,WAYPOINTS,RESIDENTS,routeBetween} from './world-data.js?v=3';
+import {ROOMS,WAYPOINTS,RESIDENTS,routeBetween} from './world-data.js?v=4';
 const host=document.querySelector('#scene');
 const scene=new T.Scene();scene.background=new T.Color('#f5f3e9');
 const renderer=new T.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.3;host.appendChild(renderer.domElement);
@@ -100,8 +100,64 @@ fence(-6.4,5.5,'x',4.2);fence(.5,5.5,'x',6);fence(6.6,-5.5,'z',11);fence(-6.5,-5
 // Flowers, little stones, mailbox and an outdoor bench.
 for(let i=0;i<36;i++){const x=-6+((i*3.71)%12),z=4.5+((i*1.31)%.55);if(x>2&&x<6||x> -2&&x<.5)continue;cyl(x,.28,z,.018,.3,'#799461');for(let k=0;k<5;k++)ball(x+Math.cos(k*1.256)*.075,.46,z+Math.sin(k*1.256)*.075,.065,.035,.065,i%2?'#f0dab2':'#dca9a0');ball(x,.48,z,.035,.03,.035,'#c5a366')}
 rounded(-3, .61,2.7,1.5,.16,.55,'#bd9465');for(let x of [-3.55,-2.45])box(x,.35,2.7,.1,.55,.4,'#a78054');box(-3,1,2.95,1.5,.5,.1,'#bd9465');cyl(.5,.68,4.9,.07,1.2,'#b28a60');rounded(.5,1.25,4.9,.6,.5,.6,'#8ca28a');box(.5,1.27,5.21,.38,.045,.025,'#526852');
-// Original animal residents, composed of soft geometry.
-function resident(kind,x,z){const g=new T.Group();g.position.set(x,.22,z);scene.add(g);const rabbit=kind==='bunny',fur=rabbit?'#f0dfc4':'#b78a61';ball(0,.55,0,.37,.46,.28,rabbit?'#d5a6a0':'#91a6a0',g);ball(0,1.12,0,.43,.41,.35,fur,g);for(let side of [-1,1]){ball(side*.19,.13,.02,.15,.18,.2,fur,g);ball(side*.38,.57,0,.12,.26,.13,fur,g);if(rabbit){ball(side*.22,1.67,0,.13,.43,.13,fur,g);ball(side*.22,1.68,.11,.065,.3,.025,'#d9b3a9',g)}else{ball(side*.32,1.45,0,.18,.18,.12,fur,g);ball(side*.32,1.46,.1,.1,.1,.025,'#dcc09a',g)}ball(side*.15,1.17,.324,.043,.058,.028,'#403e36',g);ball(side*.25,1.03,.31,.07,.035,.025,'#d6a092',g)}ball(0,1.01,.31,.18,.12,.09,rabbit?'#fff2dc':'#e5c8a4',g);ball(0,1.06,.395,.045,.03,.025,'#755543',g);if(!rabbit){box(0,.71,.272,.35,.04,.035,'#e6d3a5',g);for(let i=0;i<2;i++)ball(0,.52+i*.13,.28,.025,.025,.025,'#e8d7b6',g)}else ball(.3,1.45,.16,.12,.07,.06,'#d0a86b',g);return g}
+// Doll-like proportions: an oversized face, tiny torso, short paws and soft details.
+function resident(kind,x,z){
+  const g=new T.Group();g.position.set(x,.22,z);scene.add(g);
+  const rabbit=kind==='bunny';
+  const fur=rabbit?'#f2e6d2':'#bf916c',inner=rabbit?'#e9b9b0':'#e9c7a3';
+  const outfit=rabbit?'#8baec0':'#86a18b',outfitLight=rabbit?'#bad2d6':'#b7c8a4';
+  // Little shoes and a rounded outfit keep the body much smaller than the head.
+  ball(0,.36,0,.31,.34,.27,outfit,g);
+  ball(0,.17,.07,.31,.13,.27,outfitLight,g);
+  ball(0,.63,.12,.14,.1,.19,rabbit?'#fff2df':'#eee0bd',g);
+  const feet=[];
+  for(const side of [-1,1]){
+    const foot=new T.Group();foot.position.set(side*.17,.17,.025);g.add(foot);
+    ball(0,-.05,.12,.145,.13,.2,rabbit?'#f8ead7':'#765e4c',foot);feet.push(foot);
+  }
+  const arms=[];
+  for(const side of [-1,1]){
+    const arm=new T.Group();arm.position.set(side*.29,.53,0);g.add(arm);
+    ball(side*.065,-.09,0,.135,.19,.15,outfit,arm);
+    ball(side*.085,-.25,.04,.115,.12,.12,fur,arm);arms.push(arm);
+  }
+  ball(0,.29,-.31,rabbit?.16:.13,.16,.16,rabbit?'#fff5e7':fur,g);
+  // Head diameter is nearly twice the torso width, following the reference doll silhouette.
+  const head=new T.Group();head.position.set(0,1.02,.025);g.add(head);
+  ball(0,0,0,.56,.5,.48,fur,head);
+  ball(0,-.27,.38,.32,.2,.13,rabbit?'#fff2e2':'#e8c8a4',head);
+  for(const side of [-1,1]){
+    if(rabbit){
+      const ear=new T.Group();ear.position.set(side*.32,.4,-.03);ear.rotation.z=-side*.17;head.add(ear);
+      ball(0,.28,0,.16,.43,.13,fur,ear);
+      ball(0,.3,.12,.09,.31,.025,inner,ear);
+    }else{
+      ball(side*.42,.35,-.02,.19,.2,.14,fur,head);
+      ball(side*.42,.37,.105,.105,.11,.028,inner,head);
+    }
+    // Large glossy eyes and tiny highlights give expression even at the fixed camera distance.
+    ball(side*.2,-.05,.437,.135,.163,.06,'#fffaf1',head);
+    ball(side*.2,-.065,.494,.082,.113,.04,rabbit?'#689cb3':'#6b5a4d',head);
+    ball(side*.22,-.038,.53,.036,.047,.014,'#fffdfa',head);
+    ball(side*.16,-.115,.525,.014,.018,.008,'#fffdfa',head);
+    ball(side*.39,-.22,.35,.1,.055,.035,rabbit?'#e8b6ab':'#d9a18f',head);
+    ball(side*.11,.43,.16,.14,.1,.11,fur,head);
+  }
+  ball(0,-.21,.52,.065,.045,.04,rabbit?'#ad786e':'#835b4e',head);
+  const smile=new T.CatmullRomCurve3([new T.Vector3(-.08,-.3,.518),new T.Vector3(0,-.33,.53),new T.Vector3(.08,-.3,.518)]);
+  head.add(new T.Mesh(new T.TubeGeometry(smile,12,.008,5,false),mat('#8d6257')));
+  if(rabbit){
+    // A small flower clip and blue collar echo the reference without copying its character.
+    for(let i=0;i<5;i++){const a=i*Math.PI*2/5;ball(.45+Math.cos(a)*.065,.19+Math.sin(a)*.065,.27,.055,.055,.035,'#fff5e3',head)}
+    ball(.45,.19,.305,.04,.04,.02,'#deb97e',head);
+    ball(0,.56,.18,.11,.07,.055,'#e7f0e7',g);
+  }else{
+    ball(0,.6,.22,.24,.08,.06,'#efe0b5',g);
+    ball(0,.53,.31,.11,.12,.025,'#d9b783',g);
+  }
+  g.userData={arms,feet,head};
+  return g;
+}
 const bunny=resident('bunny',WAYPOINTS.garden.x,WAYPOINTS.garden.z),bear=resident('bear',WAYPOINTS.living.x,WAYPOINTS.living.z);bear.position.y=WAYPOINTS.living.y;
 const life={};
 for(const [kind,group] of Object.entries({bunny,bear})){
@@ -111,6 +167,7 @@ for(const [kind,group] of Object.entries({bunny,bear})){
   life[kind]={group,config,node:config.start,step:0,remaining:config.plan[0].seconds,route:[],moving:false,marker};
 }
 let paused=false,dusk=false,selected=null;const clock=new T.Clock();let elapsed=0;
+const cameraAim=new T.Vector3(),cameraFocus=new T.Vector3(),cameraHome=new T.Vector3();
 function placeLabel(node){
   return ({garden:'院子',vegetables:'菜地',bedroom:'卧室',bathroom:'厕所',kitchen:'厨房',computer:'电脑房',study:'书房',living:'客厅'})[node]||'屋内';
 }
@@ -143,8 +200,8 @@ function resize(){const w=host.clientWidth,h=host.clientHeight;renderer.setSize(
 document.querySelector('#loading').remove();
 document.querySelector('#motion').onclick=e=>{paused=!paused;e.currentTarget.innerHTML=paused?'▶ <span>继续生活</span>':'Ⅱ <span>暂停生活</span>';e.currentTarget.setAttribute('aria-pressed',String(paused))};
 document.querySelector('#light').onclick=()=>{dusk=!dusk;sun.color.set(dusk?'#ffb577':'#ffe3ae');sun.intensity=dusk?2.4:4;hemi.intensity=dusk?1.4:2.5;scene.background.set(dusk?'#e9dfd2':'#f5f3e9');document.body.style.background=dusk?'#e9dfd2':'#f5f3e9';document.querySelector('#time-label').textContent=dusk?'温柔黄昏':'暖暖午后';document.querySelector('#light').innerHTML=dusk?'☼ <span>切换午后</span>':'☼ <span>切换黄昏</span>'};
-for(const b of document.querySelectorAll('[data-resident]'))b.onclick=()=>{selected=b.dataset.resident;for(const [kind,state] of Object.entries(life))state.marker.visible=kind===selected;displayLife(selected)};
-document.querySelector('#reset').onclick=()=>{selected=null;for(const state of Object.values(life))state.marker.visible=false;resize();document.querySelector('#note').textContent='今天也是适合发呆的好天气。'};
-renderer.setAnimationLoop(()=>{const dt=Math.min(clock.getDelta(),.05);if(!paused){elapsed+=dt;for(const state of Object.values(life))updateLife(state,dt)}for(const [kind,state] of Object.entries(life)){const pace=state.moving?.06:.015;state.group.scale.y=1+Math.sin(elapsed*(state.moving?10:2)+(kind==='bear'?1:0))*pace}for(let i=0;i<crowns.length;i++)crowns[i].rotation.z=Math.sin(elapsed*.7+i)*.012;renderer.render(scene,camera)});
+for(const b of document.querySelectorAll('[data-resident]'))b.onclick=()=>{selected=b.dataset.resident;camera.clearViewOffset();for(const [kind,state] of Object.entries(life))state.marker.visible=kind===selected;displayLife(selected)};
+document.querySelector('#reset').onclick=()=>{selected=null;for(const state of Object.values(life))state.marker.visible=false;cameraAim.set(0,0,0);camera.zoom=1;camera.position.set(16,23,24);camera.lookAt(0,0,0);resize();document.querySelector('#note').textContent='今天也是适合发呆的好天气。'};
+renderer.setAnimationLoop(()=>{const dt=Math.min(clock.getDelta(),.05);if(!paused){elapsed+=dt;for(const state of Object.values(life))updateLife(state,dt)}for(const [kind,state] of Object.entries(life)){const phase=elapsed*(state.moving?10:2)+(kind==='bear'?1:0),pace=state.moving?.045:.012;state.group.scale.y=1+Math.sin(phase)*pace;state.group.userData.head.rotation.z=Math.sin(elapsed*1.4+(kind==='bear'?1:0))*.025;state.group.userData.arms.forEach((arm,i)=>arm.rotation.x=state.moving?Math.sin(phase+i*Math.PI)*.36:Math.sin(phase+i)*.035);state.group.userData.feet.forEach((foot,i)=>foot.rotation.x=state.moving?Math.sin(phase+i*Math.PI)*.38:0)}for(let i=0;i<crowns.length;i++)crowns[i].rotation.z=Math.sin(elapsed*.7+i)*.012;if(selected){const p=life[selected].group.position;cameraFocus.set(p.x,p.y+1,p.z)}else cameraFocus.set(0,0,0);cameraAim.lerp(cameraFocus,Math.min(1,dt*2.5));cameraHome.set(16+cameraAim.x,23+cameraAim.y,24+cameraAim.z);camera.position.copy(cameraHome);camera.lookAt(cameraAim);camera.zoom+=((selected?2.05:1)-camera.zoom)*Math.min(1,dt*2.5);camera.updateProjectionMatrix();renderer.render(scene,camera)});
 
 
