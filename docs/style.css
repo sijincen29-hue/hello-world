@@ -2,3 +2,13 @@
 @media(max-width:800px){.residents{left:18px;right:18px;width:auto;bottom:100px;display:flex;gap:12px;align-items:center}.section-label{display:none}.residents button{width:50%}.intro{top:115px}#scene{min-height:660px}}
 .intro .room-map{margin-top:18px;font-size:11px;line-height:1.8;letter-spacing:1px;color:#74856e}@media(max-width:800px){.intro .room-map{display:none}}
 .residents button{border-radius:12px;transition:background .2s}.residents button:hover,.residents button:focus-visible{background:#eef2e5;outline:none}.residents em{min-width:40px;text-align:right;color:#718665}.residents small{color:#647c63}.residents p{min-height:43px}@media(max-width:800px){.residents em{display:block;font-size:8px;min-width:27px}.residents button{min-width:0;gap:6px}.residents button>span:nth-child(2){min-width:0}.residents small{font-size:8px;line-height:1.3}}
+body,.brand small,.eyebrow,.intro p,.residents,.residents small,.residents em,.residents p,.weather b,.weather small,.controls,.controls button,.pill,.footnote{transition:color 1.25s ease,background-color 1.25s ease,border-color 1.25s ease}
+body[data-time="dusk"] .residents,body[data-time="dusk"] .controls,body[data-time="dusk"] .pill{background:#fff4ebdf}
+body[data-time="night"]{color:#e5e9e6}
+body[data-time="night"] .brand small,body[data-time="night"] .eyebrow,body[data-time="night"] .intro p,body[data-time="night"] .footnote{color:#b4c2cf}
+body[data-time="night"] .residents,body[data-time="night"] .controls,body[data-time="night"] .pill{background:#253549e8;border-color:#788aa066;box-shadow:0 10px 40px #12213440}
+body[data-time="night"] .residents small,body[data-time="night"] .residents em,body[data-time="night"] .residents p,body[data-time="night"] .section-label>span,body[data-time="night"] .weather small{color:#b7c7cc}
+body[data-time="night"] .residents p{border-color:#77899a55}
+body[data-time="night"] .weather b,body[data-time="night"] .controls button{color:#f1e6ca}
+body[data-time="night"] .residents button:hover,body[data-time="night"] .residents button:focus-visible,body[data-time="night"] .controls button:hover{background:#50647a}
+body[data-time="night"] .weather{color:#f4d49a}
