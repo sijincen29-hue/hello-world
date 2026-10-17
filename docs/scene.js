@@ -193,6 +193,7 @@ function updateLighting(dt){
   for(const material of glowingMaterials)material.emissiveIntensity=lampLevel*.85;
   for(const material of roomLabelMaterials)material.color.lerpColors(from.label,to.label,mix);
   document.body.style.backgroundColor=scene.background.getStyle();
+  document.body.dataset.time=lightingPhase>=1.45?'night':lightingPhase>=.5?'dusk':'day';
 }
 const cameraAim=new T.Vector3(),cameraFocus=new T.Vector3(),cameraHome=new T.Vector3();
 function placeLabel(node){
@@ -229,7 +230,6 @@ document.querySelector('#motion').onclick=e=>{paused=!paused;e.currentTarget.inn
 document.querySelector('#light').onclick=()=>{
   timeMode=(timeMode+1)%timeModes.length;
   const mode=timeModes[timeMode],button=document.querySelector('#light');
-  document.body.dataset.time=timeMode===2?'night':timeMode===1?'dusk':'day';
   document.querySelector('#time-label').textContent=mode.label;
   document.querySelector('#weather-icon').textContent=mode.icon;
   document.querySelector('.weather small').textContent=mode.weather;
