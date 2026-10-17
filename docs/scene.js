@@ -1,5 +1,5 @@
 import * as T from 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js';
-import {ROOMS,WAYPOINTS,RESIDENTS,routeBetween} from './world-data.js?v=4';
+import {ROOMS,WAYPOINTS,RESIDENTS,routeBetween} from './world-data.js?v=5';
 const host=document.querySelector('#scene');
 const scene=new T.Scene();scene.background=new T.Color('#f5f3e9');
 const renderer=new T.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.3;host.appendChild(renderer.domElement);
@@ -23,34 +23,26 @@ function lamp(x,y,z,power=7,reach=3.2,color=0xffcf91){
   const light=new T.PointLight(color,0,reach,2);
   light.position.set(x,y,z);scene.add(light);nightLights.push({light,power});
 }
-// Six distinct roofless rooms in a two-by-three dollhouse plan.
+// A shared timber floor lets the social spaces read as one home, with only
+// sleeping and bathing screened for privacy.
 rounded(0,-.5,0,15,.9,13,'#c9b590');rounded(0,-.04,0,15,.35,13,colors.grass);
 const backdrop=box(0,-1.08,0,200,.2,200,'#f5f3e9');
-rounded(-1,.27,-1.6,9.3,.55,6.7,'#bd9d78');box(-1,.57,-1.6,9,.13,6.4,'#e1c49c');
-for(const {x,z,label,color} of ROOMS){box(x,.649,z,2.89,.014,3.04,color);roomLabel(label,x,z> -2?1.18:-1.94)}
+rounded(-1,.27,-1.6,9.3,.55,6.7,'#bd9d78');box(-1,.57,-1.6,9,.13,6.4,'#e9d4ad');
+for(let x=-5.35;x<3.5;x+=.48)box(x,.646,-1.6,.013,.006,6.35,'#d8bb91');
+for(const {x,z,label} of ROOMS)roomLabel(label,x,z> -2?1.18:-1.94);
 function roomLabel(label,x,z){const c=document.createElement('canvas');c.width=256;c.height=80;const ctx=c.getContext('2d');ctx.fillStyle='#fff8e9';ctx.beginPath();ctx.roundRect(2,3,252,74,24);ctx.fill();ctx.fillStyle='#66775f';ctx.font='bold 32px Microsoft YaHei, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,128,41);const tex=new T.CanvasTexture(c);tex.colorSpace=T.SRGBColorSpace;const m=new T.Mesh(new T.PlaneGeometry(label.length>2?.92:.72,.28),new T.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false}));m.rotation.x=-Math.PI/2;m.position.set(x,.674,z);scene.add(m);roomLabelMaterials.push(m.material)}
-for(let x=-5.4;x<3.5;x+=.48)box(x,.659,-1.6,.018,.008,6.3,'#caaa81');
-// Tall exterior walls and low interior partitions leave every room visible.
+// The rear/left perimeter frames the cutaway view. The kitchen, lounge,
+// reading nook and computer corner have no enclosing partition walls.
 box(-1,2.2,-4.8,9.2,3.3,.18,colors.wall);box(-5.5,1.85,-1.6,.16,2.6,6.5,colors.wall);box(3.5,1.02,-1.7,.15,.8,6.4,colors.wall);
-// Data-derived gaps align with the route graph, so residents walk through doors.
-function partitionWithDoor(axis,fixed,start,end,opening){
-  const half=.53;
-  for(const [a,b] of [[start,opening-half],[opening+half,end]]){
-    if(b<=a)continue;
-    if(axis==='x')box((a+b)/2,1.13,fixed,b-a,.92,.13,'#d7c9a9');
-    else box(fixed,1.13,(a+b)/2,.13,.92,b-a,'#d7c9a9');
-  }
-}
-for(const x of [-2.5,.5]){
-  partitionWithDoor('z',x,-4.7,-1.73,-3.2);
-  partitionWithDoor('z',x,-1.59,1.45,-.05);
-}
-let wallStart=-5.45;
-for(const x of [-4,-1,2]){
-  partitionWithDoor('x',-1.66,wallStart,x+.53,x);
-  wallStart=x+.53;
-}
-box((wallStart+3.45)/2,1.13,-1.66,3.45-wallStart,.92,.13,'#d7c9a9');
+function screenX(x,z1,z2,height=1.55){box(x,.65+height/2,(z1+z2)/2,.12,height,z2-z1,'#d9c9a9')}
+function screenZ(z,x1,x2,height=1.4){box((x1+x2)/2,.65+height/2,z,x2-x1,height,.12,'#d9c9a9')}
+// A small sleeping alcove and bathroom share one quiet wall, with wide entries.
+screenX(-2.5,-4.7,-1.78,1.65);
+screenX(.5,-4.7,-1.78,1.6);
+screenZ(-1.66,-5.42,-4.65);screenZ(-1.66,-3.35,-2.55);
+screenZ(-1.66,-2.44,-1.54,1.65);screenZ(-1.66,-.46,.44,1.65);
+// Open shelf and runner mark the work/reading edge without closing the view.
+const runner=rounded(-1.05,.669,.2,2.05,.028,1.55,'#e6d9be');runner.rotation.y=-.07;
 box(-1,3.88,-4.8,9.4,.12,.26,'#c0a47b');box(-5.5,3.2,-1.6,.23,.12,6.6,'#c0a47b');
 function windowAt(x,w=1.38){box(x,2.6,-4.66,w,1.42,.1,'#b0936a');glow(box(x,2.6,-4.58,w-.2,1.22,.1,'#b4d9ce'),'#ffdbab');box(x,2.6,-4.5,.06,1.3,.08,colors.cream);box(x,2.6,-4.49,w-.15,.06,.08,colors.cream);box(x,1.8,-4.4,w+.17,.1,.4,colors.cream)}
 windowAt(-4);windowAt(2);windowAt(-1,.9);box(-1,2.6,-4.45,.7,1.1,.025,'#d9e7df');
@@ -75,7 +67,11 @@ for(const x of [1.03,1.98,2.93]){rounded(x,1.13,-4.15,.9,.92,1.08,'#94ae9b');box
 box(1.03,1.71,-4.13,.61,.025,.58,'#b5cbc3');cyl(1.03,1.89,-4.34,.03,.29,'#c3b68e');
 box(2,1.72,-4.12,.72,.04,.64,'#5e6557');for(const x of [1.78,2.22])for(const z of [-4.31,-3.94])cyl(x,1.75,z,.12,.025,'#abb1a2');cyl(2,1.9,-4.12,.2,.24,'#e5c7a1');glow(ball(2.7,2.35,-4.32,.16,.085,.11,'#fff1d1'));lamp(2.4,2.13,-3.95,6,3.1);
 rounded(3.05,1.63,-2.75,.65,1.93,.7,'#f5ebd6');box(2.76,1.7,-2.37,.04,.34,.05,'#adb7a1');
-rounded(1.5,1.05,-2.65,1.3,.64,.68,'#b88f69');box(1.5,1.41,-2.65,1.38,.09,.76,'#f6e7c9');cyl(1.49,.9,-1.96,.25,.5,'#c5a478');
+ rounded(1.5,1.05,-2.65,1.3,.64,.68,'#b88f69');box(1.5,1.41,-2.65,1.38,.09,.76,'#f6e7c9');
+ // The breakfast counter is the soft threshold between cooking and lounging.
+ cyl(2.35,.92,-2.08,.23,.46,'#c5a478');cyl(2.35,1.18,-2.08,.27,.07,'#e6d5b4');
+ cyl(1.02,1.52,-2.63,.16,.035,'#f9f4e6');ball(1.02,1.55,-2.63,.07,.06,.07,'#d49b76');
+ box(1.95,2.3,-4.5,1.6,.07,.27,'#c19d74');for(const x of [1.55,1.92,2.29])cyl(x,2.43,-4.5,.08,.19,'#e8d9b7');
 }
 // Computer room: desk, luminous monitor, keyboard, tower and swivel chair.
 function furnishComputer(){
@@ -94,9 +90,10 @@ box(-2.29,1.38,-.13,.3,1.35,1.65,'#b68f68');for(const y of [.85,1.33,1.8]){box(-
 }
 // Living room: sofa, low table, rug, plant and a small tea tray.
 function furnishLiving(){
-const loungeRug=cyl(2,.675,-.02,1.06,.027,'#dbceb0');loungeRug.scale.z=.8;
-rounded(2,1.03,-1.04,1.75,.58,.72,colors.green);rounded(2,1.39,-1.39,1.8,.68,.22,colors.green);for(const x of [1.23,2.77])rounded(x,1.22,-1.03,.25,.57,.83,colors.green);for(const x of [1.62,2.38])rounded(x,1.33,-1.02,.64,.15,.61,'#b9c9ad');
-rounded(2,1.02,.06,1.1,.13,.64,'#c79a6c');for(const x of [1.6,2.4])for(const z of [-.13,.25])cyl(x,.84,z,.055,.34,'#a97c53');cyl(2.22,1.17,.04,.13,.18,'#fff4de');box(1.74,1.12,.04,.31,.04,.37,'#9caa91');
+const loungeRug=cyl(2,.675,.18,1.08,.027,'#dbceb0');loungeRug.scale.z=.82;
+rounded(2,1.03,-.79,1.75,.58,.72,colors.green);rounded(2,1.39,-1.14,1.8,.68,.22,colors.green);for(const x of [1.23,2.77])rounded(x,1.22,-.78,.25,.57,.83,colors.green);for(const x of [1.62,2.38])rounded(x,1.33,-.77,.64,.15,.61,'#b9c9ad');
+rounded(2,1.02,.28,1.1,.13,.64,'#c79a6c');for(const x of [1.6,2.4])for(const z of [.09,.47])cyl(x,.84,z,.055,.34,'#a97c53');cyl(2.22,1.17,.26,.13,.18,'#fff4de');box(1.74,1.12,.26,.31,.04,.37,'#9caa91');
+rounded(2.72,.86,1.25,.56,.35,.42,'#c8a47b');box(2.72,1.08,1.25,.4,.045,.28,'#e6d9bc');
 rounded(3.13,.89,.92,.38,.47,.38,'#a78260');cyl(3.13,1.37,.92,.035,.48,'#c3a778');glow(ball(3.13,1.7,.92,.24,.17,.24,'#ffe5b9'));lamp(3.13,1.72,.92,9,3.2);
 function plant(x,y,z){cyl(x,y+.2,z,.19,.36,'#c28f73',scene,.27);for(let i=0;i<6;i++){const a=i*Math.PI/3;const leaf=ball(x+Math.cos(a)*.15,y+.61,z+Math.sin(a)*.15,.1,.32,.1,'#6f9271');leaf.rotation.z=Math.cos(a)*.6}}plant(3.1,.66,-.15);
 }
@@ -197,7 +194,7 @@ function updateLighting(dt){
 }
 const cameraAim=new T.Vector3(),cameraFocus=new T.Vector3(),cameraHome=new T.Vector3();
 function placeLabel(node){
-  return ({garden:'院子',vegetables:'菜地',bedroom:'卧室',bathroom:'厕所',kitchen:'厨房',computer:'电脑房',study:'书房',living:'客厅'})[node]||'屋内';
+  return ({garden:'院子',vegetables:'菜地',bedroom:'卧室',bathroom:'浴室',kitchen:'厨房',computer:'电脑角',study:'书房',living:'客厅'})[node]||'屋内';
 }
 function displayLife(kind){
   const state=life[kind],button=document.querySelector(`[data-resident="${kind}"]`);
