@@ -239,7 +239,7 @@ document.querySelector('#light').onclick=()=>{
 for(const b of document.querySelectorAll('[data-resident]'))b.onclick=()=>{selected=b.dataset.resident;camera.clearViewOffset();for(const [kind,state] of Object.entries(life))state.marker.visible=kind===selected;displayLife(selected)};
 document.querySelector('#reset').onclick=()=>{selected=null;for(const state of Object.values(life))state.marker.visible=false;cameraAim.set(0,0,0);camera.zoom=1;camera.position.set(16,23,24);camera.lookAt(0,0,0);resize();document.querySelector('#note').textContent='今天也是适合发呆的好天气。'};
 renderer.setAnimationLoop(()=>{
-  const dt=Math.min(clock.getDelta(),.05);
+  const frameDt=clock.getDelta(),dt=Math.min(frameDt,.05);
   if(!paused){elapsed+=dt;for(const state of Object.values(life))updateLife(state,dt)}
   for(const [kind,state] of Object.entries(life)){
     const phase=elapsed*(state.moving?10:2)+(kind==='bear'?1:0),pace=state.moving?.03:.015;
@@ -257,7 +257,7 @@ renderer.setAnimationLoop(()=>{
   cameraAim.lerp(cameraFocus,Math.min(1,dt*2.5));cameraHome.set(16+cameraAim.x,23+cameraAim.y,24+cameraAim.z);
   camera.position.copy(cameraHome);camera.lookAt(cameraAim);
   camera.zoom+=((selected?2.05:1)-camera.zoom)*Math.min(1,dt*2.5);camera.updateProjectionMatrix();
-  updateLighting(dt);renderer.render(scene,camera);
+  updateLighting(Math.min(frameDt,.5));renderer.render(scene,camera);
 });
 
 
