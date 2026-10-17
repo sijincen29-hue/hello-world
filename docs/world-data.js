@@ -1,31 +1,34 @@
 // All coordinates use the same x/z plane as the Three.js scene.
 // Keeping room and route data separate makes later layout edits independent of the life loop.
 export const ROOMS = [
-  {id:'bedroom',label:'卧室',x:-4,z:-3.2,color:'#eddbd0'},
-  {id:'bathroom',label:'厕所',x:-1,z:-3.2,color:'#dcebe8'},
-  {id:'kitchen',label:'厨房',x:2,z:-3.2,color:'#eee5cb'},
-  {id:'computer',label:'电脑房',x:-4,z:-.05,color:'#e2e5e1'},
-  {id:'study',label:'书房',x:-1,z:-.05,color:'#e9ddc8'},
-  {id:'living',label:'客厅',x:2,z:-.05,color:'#e8ddcb'},
+  {id:'bedroom',label:'卧室',x:-4,z:-3.2},
+  {id:'bathroom',label:'浴室',x:-1,z:-3.2},
+  {id:'kitchen',label:'厨房',x:2,z:-3.2},
+  {id:'computer',label:'电脑角',x:-4,z:-.05},
+  {id:'study',label:'书房',x:-1,z:-.05},
+  {id:'living',label:'客厅',x:2,z:-.05},
 ];
 
-// The route graph crosses each partition at its doorway. Furniture can stay clear of these points.
+// Routes follow a shared circulation edge beside the living area. Only the
+// bedroom and bathroom need door nodes; the other spaces are continuous.
 export const WAYPOINTS = {
   garden:{x:1.9,z:3.15,y:.22,neighbors:['path','vegetables']},
   vegetables:{x:3.2,z:3.2,y:.22,neighbors:['garden']},
   path:{x:-1,z:3.15,y:.22,neighbors:['garden','porch']},
   porch:{x:-1,z:1.85,y:.66,neighbors:['path','study']},
-  study:{x:-1,z:.55,y:.66,neighbors:['porch','computerDoor','livingDoor','bathDoor']},
-  computerDoor:{x:-2.5,z:-.05,y:.66,neighbors:['study','computer']},
-  computer:{x:-3.65,z:.55,y:.66,neighbors:['computerDoor','bedroomDoor']},
-  livingDoor:{x:.5,z:-.05,y:.66,neighbors:['study','living']},
-  living:{x:2.3,z:.82,y:.66,neighbors:['livingDoor','kitchenDoor']},
-  bedroomDoor:{x:-4,z:-1.65,y:.66,neighbors:['computer','bedroom']},
+  study:{x:-1,z:1.13,y:.66,neighbors:['porch','computer','socialLane']},
+  computer:{x:-3.65,z:1.13,y:.66,neighbors:['study','workLane']},
+  workLane:{x:-2.8,z:1.13,y:.66,neighbors:['computer','workPassage']},
+  workPassage:{x:-2.8,z:-1.3,y:.66,neighbors:['workLane','bedroomDoor']},
+  socialLane:{x:.66,z:1.13,y:.66,neighbors:['study','living','bathApproach']},
+  living:{x:2.4,z:.88,y:.66,neighbors:['socialLane']},
+  bedroomDoor:{x:-4,z:-1.65,y:.66,neighbors:['workPassage','bedroom']},
   bedroom:{x:-4,z:-2.38,y:.66,neighbors:['bedroomDoor']},
-  bathDoor:{x:-1,z:-1.65,y:.66,neighbors:['study','bathroom']},
+  bathApproach:{x:.66,z:-1.23,y:.66,neighbors:['socialLane','bathDoor','kitchenEntry']},
+  bathDoor:{x:-1,z:-1.65,y:.66,neighbors:['bathApproach','bathroom']},
   bathroom:{x:-1,z:-2.28,y:.66,neighbors:['bathDoor']},
-  kitchenDoor:{x:2,z:-1.65,y:.66,neighbors:['living','kitchen']},
-  kitchen:{x:2.65,z:-2.5,y:.66,neighbors:['kitchenDoor']},
+  kitchenEntry:{x:.66,z:-1.95,y:.66,neighbors:['bathApproach','kitchen']},
+  kitchen:{x:1.16,z:-2.05,y:.66,neighbors:['kitchenEntry']},
 };
 
 // A deterministic daily loop is useful before adding AI: the viewer can already observe a real state change.
