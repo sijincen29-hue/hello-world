@@ -421,7 +421,8 @@ function placeLabel(node){
 function displayLife(kind){
   const state=life[kind],button=document.querySelector(`[data-resident="${kind}"]`);
   const target=state.config.plan[state.step];
-  button.querySelector('small').textContent=state.moving?`正在前往${placeLabel(target.at)}`:`正在${target.activity}`;
+  const activity=/^(坐|在)/.test(target.activity)?target.activity:`正在${target.activity}`;
+  button.querySelector('small').textContent=state.moving?`正在前往${placeLabel(target.at)}`:activity;
   button.querySelector('em').textContent=state.moving?'路上':placeLabel(target.at);
   if(selected===kind)document.querySelector('#note').textContent=`${state.config.name}：${state.moving?'正在前往'+placeLabel(target.at):target.activity}。`;
 }
