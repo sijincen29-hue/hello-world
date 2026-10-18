@@ -13,6 +13,9 @@ function box(x,y,z,w,h,d,c,p=scene){return mesh(new T.BoxGeometry(w,h,d),c,x,y,z
 function ball(x,y,z,a,b,c,col,p=scene){const m=mesh(new T.SphereGeometry(1,24,16),col,x,y,z,p);m.scale.set(a,b,c);return m}
 function cyl(x,y,z,r,h,c,p=scene,r2=r){return mesh(new T.CylinderGeometry(r2,r,h,24),c,x,y,z,p)}
 function rounded(x,y,z,w,h,d,c,p=scene){const g=new T.Group();g.position.set(x,y,z);p.add(g);const r=Math.min(w,h,d)*.22;box(0,0,0,w-2*r,h,d-2*r,c,g);box(0,0,0,w,h-2*r,d-2*r,c,g);box(0,0,0,w-2*r,h-2*r,d,c,g);for(const a of [-1,1])for(const b of [-1,1])for(const e of [-1,1])ball(a*(w/2-r),b*(h/2-r),e*(d/2-r),r,r,r,c,g);return g}
+function twig(a,b,r1,r2,color,parent=scene){const from=new T.Vector3(...a),to=new T.Vector3(...b),delta=to.clone().sub(from);const m=mesh(new T.CylinderGeometry(r2,r1,delta.length(),7),color,...from.clone().add(to).multiplyScalar(.5).toArray(),parent);m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),delta.normalize());return m}
+const windParts=[];
+function wind(group,phase,strength=.04){windParts.push({group,phase,strength})}
 const nightLights=[],glowingMaterials=[],roomLabelMaterials=[];
 function glow(mesh,color='#ffd29a'){
   mesh.material=new T.MeshStandardMaterial({color:mesh.material.color,roughness:.78,emissive:color,emissiveIntensity:0});
@@ -95,19 +98,44 @@ rounded(2.25,1.03,-.79,1.55,.58,.72,colors.green);rounded(2.25,1.39,-1.14,1.6,.6
 rounded(2.2,1.02,.28,1.05,.13,.64,'#c79a6c');for(const x of [1.82,2.58])for(const z of [.09,.47])cyl(x,.84,z,.055,.34,'#a97c53');cyl(2.42,1.17,.26,.13,.18,'#fff4de');box(1.94,1.12,.26,.31,.04,.37,'#9caa91');
 rounded(2.72,.86,1.25,.56,.35,.42,'#c8a47b');box(2.72,1.08,1.25,.4,.045,.28,'#e6d9bc');
 rounded(3.13,.89,.92,.38,.47,.38,'#a78260');cyl(3.13,1.37,.92,.035,.48,'#c3a778');glow(ball(3.13,1.7,.92,.24,.17,.24,'#ffe5b9'));lamp(3.13,1.72,.92,9,3.2);
-function plant(x,y,z){cyl(x,y+.2,z,.19,.36,'#c28f73',scene,.27);for(let i=0;i<6;i++){const a=i*Math.PI/3;const leaf=ball(x+Math.cos(a)*.15,y+.61,z+Math.sin(a)*.15,.1,.32,.1,'#6f9271');leaf.rotation.z=Math.cos(a)*.6}}plant(3.1,.66,-.15);
+function plant(x,y,z){cyl(x,y+.2,z,.19,.36,'#c28f73',scene,.27);const leaves=new T.Group();leaves.position.set(x,y+.38,z);scene.add(leaves);for(let i=0;i<7;i++){const a=i*Math.PI*2/7;twig([0,0,0],[Math.cos(a)*.17,.27,Math.sin(a)*.17],.025,.012,'#6b8b6b',leaves);const leaf=ball(Math.cos(a)*.2,.31,Math.sin(a)*.2,.1,.3,.085,i%2?'#779b79':'#87a880',leaves);leaf.rotation.z=-Math.cos(a)*.55;leaf.rotation.x=Math.sin(a)*.55}wind(leaves,2.1,.055)}plant(3.1,.66,-.15);
 }
 const FURNISHERS={bedroom:furnishBedroom,bathroom:furnishBathroom,kitchen:furnishKitchen,computer:furnishComputer,study:furnishStudy,living:furnishLiving};
 for(const room of ROOMS)FURNISHERS[room.id]();
 // Front steps and stepping-stone garden path.
 rounded(-1,.4,1.9,2.3,.32,.85,'#c8ab83');rounded(-1,.2,2.4,2.6,.25,.65,'#d8bea0');for(let i=0;i<5;i++){const stone=cyl(-1+Math.sin(i)*.16,.18,2.9+i*.65,.44,.12,'#ded6b9');stone.scale.z=.69;}
-// Vegetable beds, with soil rows and leafy cabbages / carrots.
-for(let bx of [3.5,5.3]){rounded(bx,.18,3.1,1.5,.28,2.8,'#b48b60');box(bx,.34,3.1,1.27,.04,2.57,'#795b40');for(let z=2.2;z<4.4;z+=.6)for(let x of [bx-.32,bx+.32]){if(bx<4){ball(x,.49,z,.22,.19,.22,'#8ea66b');for(let k=0;k<4;k++)ball(x+Math.cos(k*1.57)*.12,.5,z+Math.sin(k*1.57)*.12,.14,.14,.14,'#a9be7a')}else{mesh(new T.ConeGeometry(.08,.24,12),'#d89355',x,.43,z);for(let k=0;k<3;k++){const l=ball(x+(k-1)*.08,.65,z,.055,.23,.06,'#6d9461');l.rotation.z=(k-1)*.35}}}}
-const crowns=[];function tree(x,z,s=1){cyl(x,.95,z,.23,1.8,'#a38158');const g=new T.Group();g.position.set(x,2,z);scene.add(g);for(const [a,b,c,r] of [[0,.6,0,1],[-.55,.2,.1,.8],[.55,.25,.2,.82],[0,.15,-.5,.86]])ball(a*s,b*s,c*s,r*s,r*.9*s,r*s,'#82a174',g);for(let i=0;i<4;i++)ball(Math.sin(i*2)*.7, .35+Math.cos(i)*.2,.65,.13,.15,.13,'#e2b47d',g);crowns.push(g)}tree(-5,3,1.1);tree(5.6,-3.4,1.05);tree(5.5,-.5,.8);
+// Each crop has a rooted stem and a separate leafy crown, so only the soft parts sway.
+for(let bx of [3.5,5.3]){rounded(bx,.18,3.1,1.5,.28,2.8,'#b48b60');box(bx,.34,3.1,1.27,.04,2.57,'#795b40');for(let z=2.2;z<4.4;z+=.6)for(let x of [bx-.32,bx+.32]){const top=new T.Group();top.position.set(x,.41,z);scene.add(top);if(bx<4){ball(0,.13,0,.18,.17,.18,'#a8bc7e',top);for(let k=0;k<6;k++){const a=k*Math.PI/3;const leaf=ball(Math.cos(a)*.15,.12,Math.sin(a)*.15,.11,.08,.19,k%2?'#85a66b':'#94b276',top);leaf.rotation.y=a;leaf.rotation.z=Math.cos(a)*.35}}else{mesh(new T.ConeGeometry(.075,.2,10),'#d89355',x,.38,z);for(let k=0;k<4;k++){const a=k*Math.PI/2;twig([0,0,0],[Math.cos(a)*.1,.26,Math.sin(a)*.1],.017,.006,'#6d9461',top);const leaf=ball(Math.cos(a)*.13,.26,Math.sin(a)*.13,.04,.19,.055,'#83a66e',top);leaf.rotation.z=-Math.cos(a)*.32}}wind(top,x+z,.04)}}
+// Tapered branches and irregular leaf clusters keep the trees soft without hiding their structure.
+function tree(x,z,s=1,seed=0){
+  const trunk=new T.Group();trunk.position.set(x,.26,z);trunk.scale.setScalar(s);scene.add(trunk);
+  twig([0,0,0],[0,1.9,0],.23,.13,'#a38158',trunk);
+  for(let i=0;i<7;i++){
+    const angle=i*2.399+seed,level=i%3,base=1.08+level*.22;
+    const reach=(i===6?.38:.72+.12*(i%2)),rise=.54+.13*((i+1)%3);
+    const branch=new T.Group();branch.position.y=base;trunk.add(branch);
+    const dx=Math.cos(angle)*reach,dz=Math.sin(angle)*reach;
+    twig([0,0,0],[dx*.53,rise*.62,dz*.53],.095,.065,'#a38158',branch);
+    twig([dx*.53,rise*.62,dz*.53],[dx,rise,dz],.065,.025,'#ad8c63',branch);
+    for(let cluster=0;cluster<3;cluster++){
+      const a=angle+cluster*2.094,r=.17+(cluster%2)*.13;
+      const cx=dx+Math.cos(a)*r,cy=rise+.11+(cluster===1?.14:0),cz=dz+Math.sin(a)*r;
+      ball(cx,cy,cz,.32,.27,.29,['#83a573','#91ae7d','#789b70'][(i+cluster+seed)%3|0],branch);
+      for(let j=0;j<4;j++){
+        const theta=a+j*1.57,leaf=ball(cx+Math.cos(theta)*.22,cy+.08+(j%2)*.13,cz+Math.sin(theta)*.18,.095,.15,.075,j%2?'#a6bd83':'#94b479',branch);
+        leaf.rotation.z=-Math.cos(theta)*.55;leaf.rotation.x=Math.sin(theta)*.4;
+      }
+    }
+    if(i<4)ball(dx*.87,rise+.02,dz*.87,.105,.11,.1,'#e1b783',branch);
+    wind(branch,seed+i*.7,.035+(i%3)*.008);
+  }
+  for(let i=0;i<3;i++){const a=i*2.1+seed;twig([Math.cos(a)*.08,0,Math.sin(a)*.08],[Math.cos(a)*.28,.18,Math.sin(a)*.28],.06,.015,'#9c7956',trunk)}
+}
+tree(-5,3,1.1,.2);tree(5.6,-3.4,1.05,1.6);tree(5.5,-.5,.8,3.1);
 function fence(x,z,axis,length){for(let i=0;i<=length;i+=.7){const px=x+(axis==='x'?i:0),pz=z+(axis==='z'?i:0);rounded(px,.65,pz,.16,1.1,.16,'#eee0bc');ball(px,1.2,pz,.12,.1,.12,'#eee0bc')}for(let y of [.45,.92])box(x+(axis==='x'?length/2:0),y,z+(axis==='z'?length/2:0),axis==='x'?length:.1,.12,axis==='z'?length:.1,'#e3cea4')}
 fence(-6.4,5.5,'x',4.2);fence(.5,5.5,'x',6);fence(6.6,-5.5,'z',11);fence(-6.5,-5.5,'z',11);fence(-6.4,-5.5,'x',13);
 // Flowers, little stones, mailbox and an outdoor bench.
-for(let i=0;i<36;i++){const x=-6+((i*3.71)%12),z=4.5+((i*1.31)%.55);if(x>2&&x<6||x> -2&&x<.5)continue;cyl(x,.28,z,.018,.3,'#799461');for(let k=0;k<5;k++)ball(x+Math.cos(k*1.256)*.075,.46,z+Math.sin(k*1.256)*.075,.065,.035,.065,i%2?'#f0dab2':'#dca9a0');ball(x,.48,z,.035,.03,.035,'#c5a366')}
+for(let i=0;i<36;i++){const x=-6+((i*3.71)%12),z=4.5+((i*1.31)%.55);if(x>2&&x<6||x> -2&&x<.5)continue;const flower=new T.Group();flower.position.set(x,.18,z);scene.add(flower);twig([0,0,0],[0,.27,0],.018,.009,'#799461',flower);for(const side of [-1,1]){const leaf=ball(side*.075,.13,0,.09,.035,.055,'#89a672',flower);leaf.rotation.z=side*.35}for(let k=0;k<5;k++)ball(Math.cos(k*1.256)*.072,.29,Math.sin(k*1.256)*.072,.065,.035,.065,i%2?'#f0dab2':'#dca9a0',flower);ball(0,.3,0,.035,.03,.035,'#c5a366',flower);wind(flower,i*.7,.045)}
 rounded(-3, .61,2.7,1.5,.16,.55,'#bd9465');for(let x of [-3.55,-2.45])box(x,.35,2.7,.1,.55,.4,'#a78054');box(-3,1,2.95,1.5,.5,.1,'#bd9465');cyl(.5,.68,4.9,.07,1.2,'#b28a60');rounded(.5,1.25,4.9,.6,.5,.6,'#8ca28a');box(.5,1.27,5.21,.38,.045,.025,'#526852');
 // A path lantern helps the small garden read at night without casting another shadow map.
 cyl(-1.85,.86,3.55,.045,1.25,'#9e825e');glow(ball(-1.85,1.56,3.55,.22,.24,.22,'#ffe0a7'));rounded(-1.85,1.83,3.55,.39,.08,.39,'#aa8d64');lamp(-1.85,1.62,3.55,11,4);
@@ -249,7 +277,8 @@ renderer.setAnimationLoop(()=>{
       arms[i].rotation.x=swing;feet[i].rotation.x=state.moving?-swing*.7:0;
     }
   }
-  for(let i=0;i<crowns.length;i++)crowns[i].rotation.z=Math.sin(elapsed*.7+i)*.012;
+  const breeze=Math.sin(elapsed*.36)*.65+Math.sin(elapsed*.71+1.2)*.35;
+  for(const {group,phase,strength} of windParts){group.rotation.z=(breeze+Math.sin(elapsed*1.13+phase)*.28)*strength;group.rotation.x=Math.sin(elapsed*.83+phase)*strength*.55}
   if(selected){const p=life[selected].group.position;cameraFocus.set(p.x,p.y+1,p.z)}else cameraFocus.set(0,0,0);
   cameraAim.lerp(cameraFocus,Math.min(1,dt*2.5));cameraHome.set(16+cameraAim.x,23+cameraAim.y,24+cameraAim.z);
   camera.position.copy(cameraHome);camera.lookAt(cameraAim);
