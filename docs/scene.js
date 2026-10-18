@@ -144,9 +144,23 @@ function tree(x,z,s=1,seed=0){
     positions.setXYZ(i,px*uneven*skirt,py*uneven*(py<0?.72:1),pz*uneven*skirt);
   }
   canopyGeometry.computeVertexNormals();
-  const canopy=mesh(canopyGeometry,['#809f70','#84a273','#7e9e70'][Math.floor(seed)%3],.02,.79,0,crown);
+  const foliageCanvas=document.createElement('canvas');foliageCanvas.width=512;foliageCanvas.height=256;
+  const foliage=foliageCanvas.getContext('2d');foliage.fillStyle='#789869';foliage.fillRect(0,0,512,256);
+  const leafShades=['#83a474','#90ac7c','#709363','#9ab384','#769a6a'];
+  for(let i=0;i<440;i++){
+    const px=random()*512,py=random()*256,w=6+random()*8,h=9+random()*11;
+    foliage.save();foliage.translate(px,py);foliage.rotate((random()-.5)*2.4);
+    foliage.fillStyle=leafShades[Math.floor(random()*leafShades.length)];
+    foliage.beginPath();foliage.moveTo(0,-h*.5);
+    foliage.bezierCurveTo(-w*.65,-h*.45,-w*.8,h*.18,0,h*.5);
+    foliage.bezierCurveTo(w*.8,h*.18,w*.65,-h*.45,0,-h*.5);
+    foliage.fill();foliage.restore();
+  }
+  const foliageTexture=new T.CanvasTexture(foliageCanvas);foliageTexture.colorSpace=T.SRGBColorSpace;
+  const canopy=new T.Mesh(canopyGeometry,new T.MeshStandardMaterial({map:foliageTexture,roughness:1}));
+  canopy.position.set(.02,.79,0);canopy.castShadow=true;canopy.receiveShadow=true;crown.add(canopy);
   canopy.scale.set(1.04,.72,.94);
-  const leafCount=230,leaves=new T.InstancedMesh(leafGeometry,leafMaterial,leafCount);
+  const leafCount=100,leaves=new T.InstancedMesh(leafGeometry,leafMaterial,leafCount);
   leaves.castShadow=false;leaves.receiveShadow=true;leaves.frustumCulled=false;crown.add(leaves);
   const dummy=new T.Object3D(),up=new T.Vector3(0,1,0);
   const palette=['#91ae7c','#a0b989','#83a775','#94b480'];
@@ -158,7 +172,7 @@ function tree(x,z,s=1,seed=0){
     dummy.position.set(.02+nx*1.04*depth*skirt,.79+ny*.72*depth*(ny<0?.72:1),nz*.94*depth*skirt);
     const direction=new T.Vector3(nx*.7+(random()-.5)*.3,.42+ny*.48,nz*.7+(random()-.5)*.3).normalize();
     dummy.quaternion.setFromUnitVectors(up,direction);dummy.rotateY(random()*Math.PI*2);
-    const size=.14+random()*.085;dummy.scale.set(size*.78,size,size*.78);dummy.updateMatrix();
+    const size=.12+random()*.07;dummy.scale.set(size*.78,size,size*.78);dummy.updateMatrix();
     leaves.setMatrixAt(i,dummy.matrix);leaves.setColorAt(i,new T.Color(palette[Math.floor(random()*palette.length)]));
   }
   leaves.instanceMatrix.needsUpdate=true;leaves.instanceColor.needsUpdate=true;
