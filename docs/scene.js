@@ -53,9 +53,9 @@ function screenX(x,z1,z2,height=1.55){box(x,.65+height/2,(z1+z2)/2,.12,height,z2
 function screenZ(z,x1,x2,height=1.55){box((x1+x2)/2,.65+height/2,z,x2-x1,height,.12,'#d9c9a9')}
 // A small sleeping alcove and bathroom share one quiet wall, with wide entries.
 screenX(-2.5,-4.82,-1.6);
-screenX(.5,-4.82,-1.6);
+screenX(.5,-4.82,-1.6,1.05);
 // Bedroom and computer corner share a continuous floor and one wide opening.
-screenZ(-1.66,-2.55,-1.65);screenZ(-1.66,-.35,.55);
+screenZ(-1.66,-2.55,-1.65,.9);screenZ(-1.66,-.35,.55,.9);
 // Open shelf and runner mark the work/reading edge without closing the view.
 const runner=rounded(-1.05,.669,.2,2.05,.028,1.55,'#e6d9be');runner.rotation.y=-.07;
 box(-1,3.88,-4.8,9.4,.12,.26,'#c0a47b');box(-5.5,3.2,-1.6,.23,.12,6.6,'#c0a47b');
@@ -92,6 +92,8 @@ rounded(-2.4,1.96,-2.62,.038,.72,.56,'#dcebe7');
 rounded(-.18,.94,-3.02,.48,.49,.64,'#f9f8ef');
 rounded(-.18,1.21,-3.02,.55,.09,.67,'#fffdf7');
 rounded(-.18,1.265,-2.98,.38,.018,.42,'#c0d5d3');
+const seatRing=mesh(new T.TorusGeometry(.205,.035,8,24),'#fffdf7',-.18,1.292,-2.98);
+seatRing.rotation.x=-Math.PI/2;seatRing.scale.y=1.16;
 rounded(-.18,1.44,-3.44,.58,.51,.16,'#fff9ef');
 rounded(-.18,.675,-2.25,.65,.026,.48,'#d8e4dc');
 }
