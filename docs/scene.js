@@ -12,7 +12,21 @@ function mesh(geo,c,x,y,z,parent=scene){const m=new T.Mesh(geo,mat(c));m.positio
 function box(x,y,z,w,h,d,c,p=scene){return mesh(new T.BoxGeometry(w,h,d),c,x,y,z,p)}
 function ball(x,y,z,a,b,c,col,p=scene){const m=mesh(new T.SphereGeometry(1,24,16),col,x,y,z,p);m.scale.set(a,b,c);return m}
 function cyl(x,y,z,r,h,c,p=scene,r2=r){return mesh(new T.CylinderGeometry(r2,r,h,24),c,x,y,z,p)}
-function rounded(x,y,z,w,h,d,c,p=scene){const g=new T.Group();g.position.set(x,y,z);p.add(g);const r=Math.min(w,h,d)*.22;box(0,0,0,w-2*r,h,d-2*r,c,g);box(0,0,0,w,h-2*r,d-2*r,c,g);box(0,0,0,w-2*r,h-2*r,d,c,g);for(const a of [-1,1])for(const b of [-1,1])for(const e of [-1,1])ball(a*(w/2-r),b*(h/2-r),e*(d/2-r),r,r,r,c,g);return g}
+function rounded(x,y,z,w,h,d,c,p=scene){
+  const radius=Math.min(w,h,d)*.22,geo=new T.BoxGeometry(w,h,d,12,12,12);
+  const positions=geo.attributes.position,normals=geo.attributes.normal;
+  const halves=[w/2,h/2,d/2];
+  for(let i=0;i<positions.count;i++){
+    const source=[positions.getX(i),positions.getY(i),positions.getZ(i)];
+    const mapped=source.map((v,axis)=>{const half=halves[axis],t=Math.abs(v)/half;return Math.sign(v)*(t<=2/3?t*(half-radius)*1.5:half-radius+(t-2/3)*radius*3)});
+    const inner=mapped.map((v,axis)=>T.MathUtils.clamp(v,-halves[axis]+radius,halves[axis]-radius));
+    const outward=new T.Vector3(mapped[0]-inner[0],mapped[1]-inner[1],mapped[2]-inner[2]).normalize();
+    positions.setXYZ(i,inner[0]+outward.x*radius,inner[1]+outward.y*radius,inner[2]+outward.z*radius);
+    normals.setXYZ(i,outward.x,outward.y,outward.z);
+  }
+  positions.needsUpdate=true;normals.needsUpdate=true;
+  return mesh(geo,c,x,y,z,p);
+}
 function twig(a,b,r1,r2,color,parent=scene){const from=new T.Vector3(...a),to=new T.Vector3(...b),delta=to.clone().sub(from);const m=mesh(new T.CylinderGeometry(r2,r1,delta.length(),7),color,...from.clone().add(to).multiplyScalar(.5).toArray(),parent);m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),delta.normalize());return m}
 const windParts=[],cropGroups=[],flowerGroups=[],treeVisuals=[];
 function wind(group,phase,strength=.04){windParts.push({group,phase,strength})}
@@ -42,7 +56,7 @@ function screenZ(z,x1,x2,height=1.55){box((x1+x2)/2,.65+height/2,z,x2-x1,height,
 // A small sleeping alcove and bathroom share one quiet wall, with wide entries.
 screenX(-2.5,-4.82,-1.6);
 screenX(.5,-4.82,-1.6);
-screenZ(-1.66,-5.55,-4.65);screenZ(-1.66,-3.35,-2.45);
+// Bedroom and computer corner share a continuous floor and one wide opening.
 screenZ(-1.66,-2.55,-1.65);screenZ(-1.66,-.35,.55);
 // Open shelf and runner mark the work/reading edge without closing the view.
 const runner=rounded(-1.05,.669,.2,2.05,.028,1.55,'#e6d9be');runner.rotation.y=-.07;
@@ -78,10 +92,19 @@ rounded(3.05,1.63,-2.75,.65,1.93,.7,'#f5ebd6');box(2.76,1.7,-2.37,.04,.34,.05,'#
 }
 // Computer room: desk, luminous monitor, keyboard, tower and swivel chair.
 function furnishComputer(){
-rounded(-4.7,1.24,-.5,1.4,.15,.65,'#a98263');for(const x of [-5.25,-4.15])box(x,.95,-.5,.1,.58,.55,'#987356');
-rounded(-4.7,1.74,-.72,.82,.68,.1,'#434f51');glow(box(-4.7,1.74,-.65,.68,.53,.02,'#80a9a1'),'#a9d9d5');box(-4.7,1.47,-.69,.08,.24,.08,'#6d7771');box(-4.7,1.34,-.25,.65,.035,.2,'#ddd8bc');
-rounded(-4.12,1.03,-.48,.32,.55,.42,'#5d706d');ball(-3.98,1.13,-.25,.045,.045,.02,'#b6d9c5');cyl(-4.7,.87,.35,.34,.1,'#a8b8ab');cyl(-4.7,.72,.35,.08,.27,'#b9a587');rounded(-4.7,1.2,.58,.72,.57,.18,'#9cad9d');
-box(-5.18,1.36,-.1,.16,1.36,1.14,'#b9946e');for(const z of [-.47,-.04,.39])box(-5.05,1.14,z,.2,.06,.31,'#e7d2ac');
+const corner=new T.Group();corner.position.set(-5.17,0,-.55);corner.rotation.y=Math.PI/2;scene.add(corner);
+rounded(0,1.24,0,1.35,.15,.62,'#a98263',corner);
+for(const x of [-.51,.51])rounded(x,.94,0,.09,.56,.48,'#987356',corner);
+rounded(0,1.72,-.2,.8,.66,.09,'#434f51',corner);
+glow(box(0,1.72,-.14,.66,.52,.025,'#80a9a1',corner),'#a9d9d5');
+rounded(0,1.42,-.19,.07,.17,.07,'#6d7771',corner);
+rounded(0,1.34,.17,.61,.035,.18,'#ddd8bc',corner);
+rounded(.43,1.02,.03,.26,.52,.36,'#5d706d',corner);
+ball(.43,1.14,.23,.04,.04,.02,'#b6d9c5',corner);
+cyl(0,.87,.88,.28,.09,'#a8b8ab',corner);cyl(0,.71,.88,.07,.25,'#b9a587',corner);
+rounded(0,1.16,1.09,.63,.52,.16,'#9cad9d',corner);
+rounded(-.66,1.18,-.18,.12,1.05,.77,'#b9946e',corner);
+for(const y of [.82,1.17,1.52])rounded(-.56,y,-.18,.24,.05,.67,'#e7d2ac',corner);
 }
 // Study: a bookshelf, open book, writing desk and warm reading lamp.
 function furnishStudy(){
@@ -187,7 +210,12 @@ function fence(x,z,axis,length){for(let i=0;i<=length;i+=.7){const px=x+(axis===
 fence(-6.4,5.5,'x',4.2);fence(.5,5.5,'x',6);fence(6.6,-5.5,'z',11);fence(-6.5,-5.5,'z',11);fence(-6.4,-5.5,'x',13);
 // Flowers, little stones, mailbox and an outdoor bench.
 for(let i=0;i<36;i++){const x=-6+((i*3.71)%12),z=4.5+((i*1.31)%.55);if(x>2&&x<6||x> -2&&x<.5)continue;const flower=new T.Group();flower.position.set(x,.18,z);scene.add(flower);flowerGroups.push(flower);twig([0,0,0],[0,.27,0],.018,.009,'#799461',flower);for(const side of [-1,1]){const leaf=ball(side*.075,.13,0,.09,.035,.055,'#89a672',flower);leaf.rotation.z=side*.35}for(let k=0;k<5;k++)ball(Math.cos(k*1.256)*.072,.29,Math.sin(k*1.256)*.072,.065,.035,.065,i%2?'#f0dab2':'#dca9a0',flower);ball(0,.3,0,.035,.03,.035,'#c5a366',flower);wind(flower,i*.7,.045)}
-rounded(-3, .61,2.7,1.5,.16,.55,'#bd9465');for(let x of [-3.55,-2.45])box(x,.35,2.7,.1,.55,.4,'#a78054');box(-3,1,2.95,1.5,.5,.1,'#bd9465');cyl(.5,.68,4.9,.07,1.2,'#b28a60');rounded(.5,1.25,4.9,.6,.5,.6,'#8ca28a');box(.5,1.27,5.21,.38,.045,.025,'#526852');
+const gardenBench=new T.Group();gardenBench.position.set(-4.05,0,3.1);scene.add(gardenBench);
+rounded(0,.62,0,1.48,.17,.54,'#bd9465',gardenBench);
+for(const x of [-.57,.57])rounded(x,.36,0,.105,.52,.39,'#a78054',gardenBench);
+rounded(0,1.02,-.27,1.48,.5,.12,'#bd9465',gardenBench);
+for(const x of [-.7,.7])rounded(x,.77,.12,.1,.12,.5,'#c9a77b',gardenBench);
+cyl(.5,.68,4.9,.07,1.2,'#b28a60');rounded(.5,1.25,4.9,.6,.5,.6,'#8ca28a');box(.5,1.27,5.21,.38,.045,.025,'#526852');
 // A path lantern helps the small garden read at night without casting another shadow map.
 cyl(-1.85,.86,3.55,.045,1.25,'#9e825e');glow(ball(-1.85,1.56,3.55,.22,.24,.22,'#ffe0a7'));rounded(-1.85,1.83,3.55,.39,.08,.39,'#aa8d64');lamp(-1.85,1.62,3.55,11,4);
 // Keep the previous resident silhouette; small nested pivots give it gentle motion.
@@ -409,7 +437,13 @@ function beginSocial(planned=false,place='garden'){
 }
 function activateSocial(){
   social.phase='talk';social.timer=0;
-  if(social.planned){life.bunny.group.position.set(1.52,.22,3.18);life.bear.group.position.set(2.28,.22,3.18);life.bunny.group.rotation.y=Math.PI/2;life.bear.group.rotation.y=-Math.PI/2}
+  if(social.planned){
+    life.bunny.group.position.set(1.22,.22,3.22);
+    life.bear.group.position.set(2.52,.22,4.16);
+    const dx=life.bear.group.position.x-life.bunny.group.position.x,dz=life.bear.group.position.z-life.bunny.group.position.z;
+    life.bunny.group.rotation.y=Math.atan2(dx,dz);
+    life.bear.group.rotation.y=Math.atan2(-dx,-dz);
+  }
   socialProps(social.place==='garden');
   socialStatus(social.script.title);
   logDialogue('event',social.script.title);
@@ -419,7 +453,7 @@ function updateSocial(dt){
   if(social.phase==='idle'){
     const a=life.bunny,b=life.bear,distance=a.group.position.distanceTo(b.group.position);
     const safe=!['bedroom','bathroom'].includes(a.node)&&!['bedroom','bathroom'].includes(b.node);
-    if(!a.moving&&!b.moving&&safe&&distance<1.25&&elapsed>=social.nextAt)beginSocial(false,a.node);
+    if(!a.moving&&!b.moving&&safe&&distance>=1.4&&distance<2.1&&elapsed>=social.nextAt)beginSocial(false,a.node);
     else if(elapsed>=social.nextAt)beginSocial(true,'garden');
     return;
   }
