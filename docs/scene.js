@@ -14,7 +14,7 @@ function ball(x,y,z,a,b,c,col,p=scene){const m=mesh(new T.SphereGeometry(1,24,16
 function cyl(x,y,z,r,h,c,p=scene,r2=r){return mesh(new T.CylinderGeometry(r2,r,h,24),c,x,y,z,p)}
 function rounded(x,y,z,w,h,d,c,p=scene){const g=new T.Group();g.position.set(x,y,z);p.add(g);const r=Math.min(w,h,d)*.22;box(0,0,0,w-2*r,h,d-2*r,c,g);box(0,0,0,w,h-2*r,d-2*r,c,g);box(0,0,0,w-2*r,h-2*r,d,c,g);for(const a of [-1,1])for(const b of [-1,1])for(const e of [-1,1])ball(a*(w/2-r),b*(h/2-r),e*(d/2-r),r,r,r,c,g);return g}
 function twig(a,b,r1,r2,color,parent=scene){const from=new T.Vector3(...a),to=new T.Vector3(...b),delta=to.clone().sub(from);const m=mesh(new T.CylinderGeometry(r2,r1,delta.length(),7),color,...from.clone().add(to).multiplyScalar(.5).toArray(),parent);m.quaternion.setFromUnitVectors(new T.Vector3(0,1,0),delta.normalize());return m}
-const windParts=[];
+const windParts=[],cropGroups=[],flowerGroups=[],treeVisuals=[];
 function wind(group,phase,strength=.04){windParts.push({group,phase,strength})}
 const nightLights=[],glowingMaterials=[],roomLabelMaterials=[];
 function glow(mesh,color='#ffd29a'){
@@ -105,7 +105,7 @@ for(const room of ROOMS)FURNISHERS[room.id]();
 // Front steps and stepping-stone garden path.
 rounded(-1,.4,1.9,2.3,.32,.85,'#c8ab83');rounded(-1,.2,2.4,2.6,.25,.65,'#d8bea0');for(let i=0;i<5;i++){const stone=cyl(-1+Math.sin(i)*.16,.18,2.9+i*.65,.44,.12,'#ded6b9');stone.scale.z=.69;}
 // Each crop has a rooted stem and a separate leafy crown, so only the soft parts sway.
-for(let bx of [3.5,5.3]){rounded(bx,.18,3.1,1.5,.28,2.8,'#b48b60');box(bx,.34,3.1,1.27,.04,2.57,'#795b40');for(let z=2.2;z<4.4;z+=.6)for(let x of [bx-.32,bx+.32]){const top=new T.Group();top.position.set(x,.41,z);scene.add(top);if(bx<4){ball(0,.13,0,.18,.17,.18,'#a8bc7e',top);for(let k=0;k<6;k++){const a=k*Math.PI/3;const leaf=ball(Math.cos(a)*.15,.12,Math.sin(a)*.15,.11,.08,.19,k%2?'#85a66b':'#94b276',top);leaf.rotation.y=a;leaf.rotation.z=Math.cos(a)*.35}}else{mesh(new T.ConeGeometry(.075,.2,10),'#d89355',x,.38,z);for(let k=0;k<4;k++){const a=k*Math.PI/2;twig([0,0,0],[Math.cos(a)*.1,.26,Math.sin(a)*.1],.017,.006,'#6d9461',top);const leaf=ball(Math.cos(a)*.13,.26,Math.sin(a)*.13,.04,.19,.055,'#83a66e',top);leaf.rotation.z=-Math.cos(a)*.32}}wind(top,x+z,.04)}}
+for(let bx of [3.5,5.3]){rounded(bx,.18,3.1,1.5,.28,2.8,'#b48b60');box(bx,.34,3.1,1.27,.04,2.57,'#795b40');for(let z=2.2;z<4.4;z+=.6)for(let x of [bx-.32,bx+.32]){const top=new T.Group();top.position.set(x,.41,z);scene.add(top);cropGroups.push(top);if(bx<4){ball(0,.13,0,.18,.17,.18,'#a8bc7e',top);for(let k=0;k<6;k++){const a=k*Math.PI/3;const leaf=ball(Math.cos(a)*.15,.12,Math.sin(a)*.15,.11,.08,.19,k%2?'#85a66b':'#94b276',top);leaf.rotation.y=a;leaf.rotation.z=Math.cos(a)*.35}}else{mesh(new T.ConeGeometry(.075,.2,10),'#d89355',x,.38,z);for(let k=0;k<4;k++){const a=k*Math.PI/2;twig([0,0,0],[Math.cos(a)*.1,.26,Math.sin(a)*.1],.017,.006,'#6d9461',top);const leaf=ball(Math.cos(a)*.13,.26,Math.sin(a)*.13,.04,.19,.055,'#83a66e',top);leaf.rotation.z=-Math.cos(a)*.32}}wind(top,x+z,.04)}}
 // A leaf-shaped mesh is reused for the whole crown. Its folded center catches the warm light.
 const leafGeometry=new T.BufferGeometry();
 leafGeometry.setAttribute('position',new T.Float32BufferAttribute([
@@ -147,8 +147,8 @@ function tree(x,z,s=1,seed=0){
   }
   canopyGeometry.computeVertexNormals();
   const foliageCanvas=document.createElement('canvas');foliageCanvas.width=512;foliageCanvas.height=256;
-  const foliage=foliageCanvas.getContext('2d');foliage.fillStyle='#789869';foliage.fillRect(0,0,512,256);
-  const leafShades=['#83a474','#90ac7c','#709363','#9ab384','#769a6a'];
+  const foliage=foliageCanvas.getContext('2d');foliage.fillStyle='#dedbd0';foliage.fillRect(0,0,512,256);
+  const leafShades=['#f0eadb','#d2d1c5','#babdb4','#e6e2d4','#c5c9bd'];
   for(let i=0;i<440;i++){
     const px=random()*512,py=random()*256,w=6+random()*8,h=9+random()*11;
     foliage.save();foliage.translate(px,py);foliage.rotate((random()-.5)*2.4);
@@ -159,13 +159,13 @@ function tree(x,z,s=1,seed=0){
     foliage.fill();foliage.restore();
   }
   const foliageTexture=new T.CanvasTexture(foliageCanvas);foliageTexture.colorSpace=T.SRGBColorSpace;
-  const canopy=new T.Mesh(canopyGeometry,new T.MeshStandardMaterial({map:foliageTexture,roughness:1}));
+  const canopy=new T.Mesh(canopyGeometry,new T.MeshStandardMaterial({map:foliageTexture,roughness:1,transparent:true}));
   canopy.position.set(.02,.79,0);canopy.castShadow=true;canopy.receiveShadow=true;crown.add(canopy);
   canopy.scale.set(1.12,.67,.94);
   const leafCount=100,leaves=new T.InstancedMesh(leafGeometry,leafMaterial,leafCount);
   leaves.castShadow=false;leaves.receiveShadow=true;leaves.frustumCulled=false;crown.add(leaves);
   const dummy=new T.Object3D(),up=new T.Vector3(0,1,0);
-  const palette=['#91ae7c','#a0b989','#83a775','#94b480'];
+  const palette=['#f4f0e7','#e8e5dd','#d9dbd4','#ffffff'];
   for(let i=0;i<leafCount;i++){
     const angle=random()*Math.PI*2,u=-.62+random()*1.58,ring=Math.sqrt(1-u*u);
     const depth=.78+random()*.2;
@@ -178,6 +178,7 @@ function tree(x,z,s=1,seed=0){
     leaves.setMatrixAt(i,dummy.matrix);leaves.setColorAt(i,new T.Color(palette[Math.floor(random()*palette.length)]));
   }
   leaves.instanceMatrix.needsUpdate=true;leaves.instanceColor.needsUpdate=true;
+  treeVisuals.push({canopy,leaves,leafCount});
   wind(crown,seed,.014);
   for(let i=0;i<3;i++){const a=i*2.1+seed;twig([Math.cos(a)*.08,0,Math.sin(a)*.08],[Math.cos(a)*.3,.18,Math.sin(a)*.3],.06,.014,'#987650',trunk)}
 }
@@ -185,7 +186,7 @@ tree(-5,3,1.1,.2);tree(5.6,-3.4,1.05,1.6);tree(5.5,-.5,.8,3.1);
 function fence(x,z,axis,length){for(let i=0;i<=length;i+=.7){const px=x+(axis==='x'?i:0),pz=z+(axis==='z'?i:0);rounded(px,.65,pz,.16,1.1,.16,'#eee0bc');ball(px,1.2,pz,.12,.1,.12,'#eee0bc')}for(let y of [.45,.92])box(x+(axis==='x'?length/2:0),y,z+(axis==='z'?length/2:0),axis==='x'?length:.1,.12,axis==='z'?length:.1,'#e3cea4')}
 fence(-6.4,5.5,'x',4.2);fence(.5,5.5,'x',6);fence(6.6,-5.5,'z',11);fence(-6.5,-5.5,'z',11);fence(-6.4,-5.5,'x',13);
 // Flowers, little stones, mailbox and an outdoor bench.
-for(let i=0;i<36;i++){const x=-6+((i*3.71)%12),z=4.5+((i*1.31)%.55);if(x>2&&x<6||x> -2&&x<.5)continue;const flower=new T.Group();flower.position.set(x,.18,z);scene.add(flower);twig([0,0,0],[0,.27,0],.018,.009,'#799461',flower);for(const side of [-1,1]){const leaf=ball(side*.075,.13,0,.09,.035,.055,'#89a672',flower);leaf.rotation.z=side*.35}for(let k=0;k<5;k++)ball(Math.cos(k*1.256)*.072,.29,Math.sin(k*1.256)*.072,.065,.035,.065,i%2?'#f0dab2':'#dca9a0',flower);ball(0,.3,0,.035,.03,.035,'#c5a366',flower);wind(flower,i*.7,.045)}
+for(let i=0;i<36;i++){const x=-6+((i*3.71)%12),z=4.5+((i*1.31)%.55);if(x>2&&x<6||x> -2&&x<.5)continue;const flower=new T.Group();flower.position.set(x,.18,z);scene.add(flower);flowerGroups.push(flower);twig([0,0,0],[0,.27,0],.018,.009,'#799461',flower);for(const side of [-1,1]){const leaf=ball(side*.075,.13,0,.09,.035,.055,'#89a672',flower);leaf.rotation.z=side*.35}for(let k=0;k<5;k++)ball(Math.cos(k*1.256)*.072,.29,Math.sin(k*1.256)*.072,.065,.035,.065,i%2?'#f0dab2':'#dca9a0',flower);ball(0,.3,0,.035,.03,.035,'#c5a366',flower);wind(flower,i*.7,.045)}
 rounded(-3, .61,2.7,1.5,.16,.55,'#bd9465');for(let x of [-3.55,-2.45])box(x,.35,2.7,.1,.55,.4,'#a78054');box(-3,1,2.95,1.5,.5,.1,'#bd9465');cyl(.5,.68,4.9,.07,1.2,'#b28a60');rounded(.5,1.25,4.9,.6,.5,.6,'#8ca28a');box(.5,1.27,5.21,.38,.045,.025,'#526852');
 // A path lantern helps the small garden read at night without casting another shadow map.
 cyl(-1.85,.86,3.55,.045,1.25,'#9e825e');glow(ball(-1.85,1.56,3.55,.22,.24,.22,'#ffe0a7'));rounded(-1.85,1.83,3.55,.39,.08,.39,'#aa8d64');lamp(-1.85,1.62,3.55,11,4);
@@ -238,6 +239,44 @@ for(const [kind,group] of Object.entries({bunny,bear})){
   life[kind]={group,config,node:config.start,step:0,remaining:config.plan[0].seconds,route:[],moving:false,marker};
 }
 let paused=false,selected=null;const clock=new T.Clock();let elapsed=0;
+// One full cycle follows the local calendar. The preview button only overrides its target.
+const seasons=[
+  {name:'春',icon:'🌸',grass:'#a9c887',leaf:'#95b879',sky:'#eef5e7',sun:'#fff0c5',sunHeight:14,flowers:1,crops:.52,foliage:.83,snow:0,fallen:0},
+  {name:'夏',icon:'☀',grass:'#91b46f',leaf:'#719b63',sky:'#f4f3df',sun:'#ffe3aa',sunHeight:17,flowers:.78,crops:1,foliage:1,snow:0,fallen:0},
+  {name:'秋',icon:'🍂',grass:'#b5ac75',leaf:'#bf8754',sky:'#f3e6d2',sun:'#ffd29f',sunHeight:12,flowers:.28,crops:.66,foliage:.68,snow:0,fallen:1},
+  {name:'冬',icon:'❄',grass:'#c8c8b2',leaf:'#b7ae95',sky:'#e5edf1',sun:'#d9e8f1',sunHeight:9,flowers:0,crops:.08,foliage:.03,snow:1,fallen:.14}
+];
+function calendarSeason(date=new Date()){
+  let month=date.getMonth()+(date.getDate()-1+date.getHours()/24)/new Date(date.getFullYear(),date.getMonth()+1,0).getDate();
+  if(month<3.5)month+=12;
+  const index=Math.min(3,Math.floor((month-3.5)/3));
+  const t=T.MathUtils.clamp((month-(3.5+index*3))/3,0,1);
+  return index+t*t*(3-2*t);
+}
+let seasonOverride=-1,seasonPhase=calendarSeason(),seasonClock=0;
+const snowCover=new T.Mesh(new T.PlaneGeometry(14.85,12.85),new T.MeshBasicMaterial({color:'#f4f7f4',transparent:true,opacity:0,depthWrite:false}));
+snowCover.rotation.x=-Math.PI/2;snowCover.position.y=.145;scene.add(snowCover);
+const fallenLeafMaterial=new T.MeshStandardMaterial({color:'#bc7f51',roughness:1,side:T.DoubleSide,transparent:true,opacity:0,depthWrite:false});
+const fallenLeaves=new T.InstancedMesh(leafGeometry,fallenLeafMaterial,90),leafDummy=new T.Object3D();
+for(let i=0;i<90;i++){
+  const x=-6.05+((i*7.917)%12.1),z=-5.15+((i*4.381)%10.3);
+  leafDummy.position.set(x,.16+(i%5)*.002,z);leafDummy.rotation.set(-Math.PI/2,0,i*2.399);
+  leafDummy.scale.setScalar(.08+(i%4)*.012);leafDummy.updateMatrix();fallenLeaves.setMatrixAt(i,leafDummy.matrix);
+  fallenLeaves.setColorAt(i,new T.Color(['#d69257','#b77348','#e6af72','#aa7146'][i%4]));
+}
+fallenLeaves.instanceMatrix.needsUpdate=true;fallenLeaves.instanceColor.needsUpdate=true;fallenLeaves.frustumCulled=false;fallenLeaves.visible=false;scene.add(fallenLeaves);
+const snowPositions=new Float32Array(110*3);
+for(let i=0;i<110;i++){snowPositions[i*3]=-6.2+(i*4.971)%12.4;snowPositions[i*3+1]=.35+(i*1.749)%5;snowPositions[i*3+2]=-5.2+(i*3.473)%10.4}
+const snowGeometry=new T.BufferGeometry();snowGeometry.setAttribute('position',new T.BufferAttribute(snowPositions,3));
+const snowfall=new T.Points(snowGeometry,new T.PointsMaterial({color:'#fffefd',size:.045,transparent:true,opacity:0,depthWrite:false}));scene.add(snowfall);
+const poolCanvas=document.createElement('canvas');poolCanvas.width=64;poolCanvas.height=64;
+const poolContext=poolCanvas.getContext('2d'),poolGradient=poolContext.createRadialGradient(32,32,1,32,32,32);
+poolGradient.addColorStop(0,'rgba(255,220,144,.7)');poolGradient.addColorStop(.5,'rgba(255,218,147,.23)');poolGradient.addColorStop(1,'rgba(255,218,147,0)');poolContext.fillStyle=poolGradient;poolContext.fillRect(0,0,64,64);
+const poolTexture=new T.CanvasTexture(poolCanvas),lightPools=[];
+for(const [x,z,r,y] of [[-1.85,3.55,3.2,.17],[3.13,.92,2.4,.69],[-2.85,-4.24,2,.68],[-.43,-.98,1.9,.68]]){
+  const pool=new T.Mesh(new T.PlaneGeometry(r,r),new T.MeshBasicMaterial({map:poolTexture,transparent:true,opacity:0,depthWrite:false,blending:T.AdditiveBlending}));
+  pool.rotation.x=-Math.PI/2;pool.position.set(x,y,z);scene.add(pool);lightPools.push(pool);
+}
 const lightingPresets=[
   {sky:new T.Color('#f5f3e9'),skyLight:new T.Color('#fff9e9'),groundLight:new T.Color('#93a675'),key:new T.Color('#ffe3ae'),keyPower:4,ambientPower:2.5,exposure:1.3,lamps:0,label:new T.Color('#ffffff')},
   {sky:new T.Color('#ddc9be'),skyLight:new T.Color('#ffe1c5'),groundLight:new T.Color('#947f80'),key:new T.Color('#ffae77'),keyPower:2.25,ambientPower:1.7,exposure:1.22,lamps:.45,label:new T.Color('#f7ead9')},
@@ -249,22 +288,53 @@ const timeModes=[
   {label:'灯火夜晚',weather:'晚风 · 适合慢慢休息',icon:'☾',next:'午后'}
 ];
 let timeMode=0,lightingPhase=0;
+const seasonColor=new T.Color(),seasonSun=new T.Color(),seasonSky=new T.Color();
+function seasonValue(key,index,mix){return T.MathUtils.lerp(seasons[index][key],seasons[(index+1)%4][key],mix)}
 function updateLighting(dt){
   const gap=timeMode-lightingPhase;
-  if(gap===0)return;
   lightingPhase+=Math.sign(gap)*Math.min(Math.abs(gap),dt*.8);
+  seasonClock+=dt;
+  if(seasonClock>60){seasonClock=0;if(seasonOverride<0)document.querySelector('#season-label').textContent=`${seasons[Math.floor(calendarSeason())].name}日 · 随日期缓慢变化`}
+  const targetSeason=seasonOverride<0?calendarSeason():seasonOverride;
+  let seasonGap=((targetSeason-seasonPhase+6)%4)-2;
+  if(Math.abs(seasonGap)>1.95)seasonGap=targetSeason-seasonPhase;
+  seasonPhase=(seasonPhase+Math.sign(seasonGap)*Math.min(Math.abs(seasonGap),dt*.48)+4)%4;
+  const si=Math.floor(seasonPhase),sm=seasonPhase-si;
+  const seasonA=seasons[si],seasonB=seasons[(si+1)%4];
+  seasonColor.set(seasonA.leaf).lerp(new T.Color(seasonB.leaf),sm);
+  leafMaterial.color.copy(seasonColor);
+  for(const {canopy,leaves,leafCount} of treeVisuals){
+    const foliage=seasonValue('foliage',si,sm);
+    canopy.material.color.copy(seasonColor);canopy.material.opacity=Math.min(1,foliage*1.18);
+    canopy.visible=foliage>.06;canopy.castShadow=foliage>.35;
+    leaves.count=Math.round(leafCount*foliage);leaves.visible=foliage>.06;
+  }
+  const flowerSize=seasonValue('flowers',si,sm),cropSize=seasonValue('crops',si,sm);
+  for(const flower of flowerGroups)flower.scale.setScalar(Math.max(.001,flowerSize));
+  for(const crop of cropGroups)crop.scale.setScalar(Math.max(.001,cropSize));
+  mat(colors.grass).color.set(seasonA.grass).lerp(new T.Color(seasonB.grass),sm);
+  const snow=seasonValue('snow',si,sm),fallen=seasonValue('fallen',si,sm);
+  snowCover.material.opacity=snow*.82;snowCover.visible=snow>.01;
+  snowfall.material.opacity=snow*.85;snowfall.visible=snow>.05;
+  fallenLeafMaterial.opacity=fallen*.95;fallenLeaves.visible=fallen>.05;
   const a=Math.min(2,Math.floor(lightingPhase)),b=Math.min(2,a+1),mix=lightingPhase-a;
   const from=lightingPresets[a],to=lightingPresets[b];
   scene.background.lerpColors(from.sky,to.sky,mix);
+  seasonSky.set(seasonA.sky).lerp(new T.Color(seasonB.sky),sm);
+  scene.background.lerp(seasonSky,1-Math.min(1,lightingPhase*.74));
   backdrop.material.color.copy(scene.background);
   sun.color.lerpColors(from.key,to.key,mix);
+  seasonSun.set(seasonA.sun).lerp(new T.Color(seasonB.sun),sm);
+  sun.color.lerp(seasonSun,1-Math.min(1,lightingPhase*.65));
   sun.intensity=T.MathUtils.lerp(from.keyPower,to.keyPower,mix);
+  sun.position.set(T.MathUtils.lerp(-5,-9,Math.min(1,lightingPhase)),T.MathUtils.lerp(seasonValue('sunHeight',si,sm),5,Math.min(1,lightingPhase)),8);
   hemi.color.lerpColors(from.skyLight,to.skyLight,mix);
   hemi.groundColor.lerpColors(from.groundLight,to.groundLight,mix);
   hemi.intensity=T.MathUtils.lerp(from.ambientPower,to.ambientPower,mix);
   renderer.toneMappingExposure=T.MathUtils.lerp(from.exposure,to.exposure,mix);
   const lampLevel=T.MathUtils.lerp(from.lamps,to.lamps,mix);
   for(const {light,power} of nightLights)light.intensity=power*lampLevel;
+  for(const pool of lightPools)pool.material.opacity=lampLevel*.85;
   for(const material of glowingMaterials)material.emissiveIntensity=lampLevel*.85;
   for(const material of roomLabelMaterials)material.color.lerpColors(from.label,to.label,mix);
   document.body.style.backgroundColor=scene.background.getStyle();
@@ -307,10 +377,20 @@ document.querySelector('#light').onclick=()=>{
   const mode=timeModes[timeMode],button=document.querySelector('#light');
   document.querySelector('#time-label').textContent=mode.label;
   document.querySelector('#weather-icon').textContent=mode.icon;
-  document.querySelector('.weather small').textContent=mode.weather;
+  document.querySelector('.weather small').firstChild.textContent=mode.weather;
   button.innerHTML=`☼ <span>切换${mode.next}</span>`;
   button.setAttribute('aria-label',`切换${mode.next}场景`);
 };
+const seasonButton=document.querySelector('#season');
+function showSeasonControl(){
+  const automatic=seasonOverride<0,season=seasons[automatic?Math.floor(calendarSeason()):seasonOverride];
+  seasonButton.innerHTML=`${season.icon} <span>${automatic?'四季自动':season.name+'季预览'}</span>`;
+  seasonButton.setAttribute('aria-label',automatic?'切换至春季预览':`当前${season.name}季预览，切换季节`);
+  seasonButton.setAttribute('aria-pressed',String(!automatic));
+  document.querySelector('#season-label').textContent=automatic?`${season.name}日 · 随日期缓慢变化`:`${season.name}季 · 手动预览`;
+}
+seasonButton.onclick=()=>{seasonOverride=(seasonOverride+1)%5;if(seasonOverride===4)seasonOverride=-1;showSeasonControl()};
+showSeasonControl();
 for(const b of document.querySelectorAll('[data-resident]'))b.onclick=()=>{selected=b.dataset.resident;camera.clearViewOffset();for(const [kind,state] of Object.entries(life))state.marker.visible=kind===selected;displayLife(selected)};
 document.querySelector('#reset').onclick=()=>{selected=null;for(const state of Object.values(life))state.marker.visible=false;cameraAim.set(0,0,0);camera.zoom=1;camera.position.set(16,23,24);camera.lookAt(0,0,0);resize();document.querySelector('#note').textContent='今天也是适合发呆的好天气。'};
 renderer.setAnimationLoop(()=>{
@@ -329,12 +409,12 @@ renderer.setAnimationLoop(()=>{
   }
   const breeze=Math.sin(elapsed*.36)*.65+Math.sin(elapsed*.71+1.2)*.35;
   for(const {group,phase,strength} of windParts){group.rotation.z=(breeze+Math.sin(elapsed*1.13+phase)*.28)*strength;group.rotation.x=Math.sin(elapsed*.83+phase)*strength*.55}
+  if(snowfall.visible){const positions=snowGeometry.attributes.position;for(let i=0;i<positions.count;i++){let y=positions.getY(i)-dt*(.23+(i%7)*.035);if(y<.2)y+=5;positions.setY(i,y);positions.setX(i,positions.getX(i)+Math.sin(elapsed*.7+i)*dt*.025)}positions.needsUpdate=true}
   if(selected){const p=life[selected].group.position;cameraFocus.set(p.x,p.y+1,p.z)}else cameraFocus.set(0,0,0);
   cameraAim.lerp(cameraFocus,Math.min(1,dt*2.5));cameraHome.set(16+cameraAim.x,23+cameraAim.y,24+cameraAim.z);
   camera.position.copy(cameraHome);camera.lookAt(cameraAim);
   camera.zoom+=((selected?2.05:1)-camera.zoom)*Math.min(1,dt*2.5);camera.updateProjectionMatrix();
   updateLighting(Math.min(frameDt,.5));renderer.render(scene,camera);
 });
-
 
 
