@@ -139,24 +139,26 @@ function tree(x,z,s=1,seed=0){
   const canopyGeometry=new T.SphereGeometry(1,32,20),positions=canopyGeometry.attributes.position;
   for(let i=0;i<positions.count;i++){
     const px=positions.getX(i),py=positions.getY(i),pz=positions.getZ(i);
-    const uneven=1+.055*Math.sin(px*7+py*4+seed)*Math.sin(pz*5-py*3)+.035*Math.sin(py*10+pz*6+seed);
-    positions.setXYZ(i,px*uneven,py*uneven,pz*uneven);
+    const uneven=1+.075*Math.sin(px*7+py*4+seed)*Math.sin(pz*5-py*3)+.04*Math.sin(py*10+pz*6+seed);
+    const skirt=py<0?1-py*.06:1;
+    positions.setXYZ(i,px*uneven*skirt,py*uneven*(py<0?.72:1),pz*uneven*skirt);
   }
   canopyGeometry.computeVertexNormals();
   const canopy=mesh(canopyGeometry,['#809f70','#84a273','#7e9e70'][Math.floor(seed)%3],.02,.79,0,crown);
-  canopy.scale.set(1.02,.72,.91);
-  const leafCount=190,leaves=new T.InstancedMesh(leafGeometry,leafMaterial,leafCount);
+  canopy.scale.set(1.04,.72,.94);
+  const leafCount=230,leaves=new T.InstancedMesh(leafGeometry,leafMaterial,leafCount);
   leaves.castShadow=false;leaves.receiveShadow=true;leaves.frustumCulled=false;crown.add(leaves);
   const dummy=new T.Object3D(),up=new T.Vector3(0,1,0);
   const palette=['#91ae7c','#a0b989','#83a775','#94b480'];
   for(let i=0;i<leafCount;i++){
     const angle=random()*Math.PI*2,u=-.62+random()*1.58,ring=Math.sqrt(1-u*u);
-    const depth=.84+random()*.21;
+    const depth=.78+random()*.2;
     const nx=Math.cos(angle)*ring,ny=u,nz=Math.sin(angle)*ring;
-    dummy.position.set(.02+nx*1.02*depth,.79+ny*.72*depth,nz*.91*depth);
+    const skirt=ny<0?1-ny*.06:1;
+    dummy.position.set(.02+nx*1.04*depth*skirt,.79+ny*.72*depth*(ny<0?.72:1),nz*.94*depth*skirt);
     const direction=new T.Vector3(nx*.7+(random()-.5)*.3,.42+ny*.48,nz*.7+(random()-.5)*.3).normalize();
     dummy.quaternion.setFromUnitVectors(up,direction);dummy.rotateY(random()*Math.PI*2);
-    const size=.19+random()*.11;dummy.scale.set(size*.78,size,size*.78);dummy.updateMatrix();
+    const size=.14+random()*.085;dummy.scale.set(size*.78,size,size*.78);dummy.updateMatrix();
     leaves.setMatrixAt(i,dummy.matrix);leaves.setColorAt(i,new T.Color(palette[Math.floor(random()*palette.length)]));
   }
   leaves.instanceMatrix.needsUpdate=true;leaves.instanceColor.needsUpdate=true;
