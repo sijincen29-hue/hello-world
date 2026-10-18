@@ -1,5 +1,5 @@
 import * as T from 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js';
-import {ROOMS,WAYPOINTS,RESIDENTS,routeBetween} from './world-data.js?v=6';
+import {ROOMS,WAYPOINTS,RESIDENTS,routeBetween} from './world-data.js?v=7';
 const host=document.querySelector('#scene');
 const scene=new T.Scene();scene.background=new T.Color('#f5f3e9');
 const renderer=new T.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.3;host.appendChild(renderer.domElement);
@@ -255,7 +255,7 @@ function resident(kind,x,z){
   const rabbit=kind==='bunny';
   const fur=rabbit?'#f0dfc4':'#b78a61';
   const clothes=rabbit?'#d5a6a0':'#91a6a0';
-  const arms=[],feet=[];
+  const arms=[],feet=[],openEyes=[],sleepEyes=[];
   ball(0,.55,0,.37,.46,.28,clothes,g);
   ball(0,.22,-.27,rabbit?.13:.11,.12,.13,fur,g);
   const head=new T.Group();head.position.y=1.12;g.add(head);
@@ -274,8 +274,10 @@ function resident(kind,x,z){
       ball(side*.32,.33,0,.18,.18,.12,fur,head);
       ball(side*.32,.34,.1,.1,.1,.025,'#dcc09a',head);
     }
-    ball(side*.15,.05,.324,.043,.058,.028,'#403e36',head);
-    ball(side*.15+.013,.073,.349,.011,.015,.007,'#fff8ee',head);
+    openEyes.push(ball(side*.15,.05,.324,.043,.058,.028,'#403e36',head));
+    openEyes.push(ball(side*.15+.013,.073,.349,.011,.015,.007,'#fff8ee',head));
+    const sleepingEye=rounded(side*.15,.015,.35,.11,.018,.018,'#735d4e',head);
+    sleepingEye.visible=false;sleepEyes.push(sleepingEye);
     ball(side*.25,-.09,.31,.07,.035,.025,'#d6a092',head);
   }
   ball(0,-.11,.31,.18,.12,.09,rabbit?'#fff2dc':'#e5c8a4',head);
@@ -286,7 +288,15 @@ function resident(kind,x,z){
     box(0,.71,.272,.35,.04,.035,'#e6d3a5',g);
     for(let i=0;i<2;i++)ball(0,.52+i*.13,.28,.025,.025,.025,'#e8d7b6',g);
   }
-  g.userData={head,arms,feet};
+  const rig=new T.Group();while(g.children.length)rig.add(g.children[0]);g.add(rig);
+  const book=new T.Group();book.position.set(0,.58,.43);rig.add(book);
+  rounded(-.105,0,0,.2,.038,.29,'#f5e6c7',book);rounded(.105,0,0,.2,.038,.29,'#fff2d8',book);
+  box(0,-.012,0,.025,.025,.31,'#b98f78',book);book.visible=false;
+  const gamepad=new T.Group();gamepad.position.set(0,.55,.43);rig.add(gamepad);
+  rounded(0,0,0,.37,.11,.2,'#5e7574',gamepad);
+  for(const side of [-1,1])ball(side*.1,.065,.025,.027,.012,.027,side<0?'#c8dfca':'#e8c5ac',gamepad);
+  gamepad.visible=false;
+  g.userData={head,arms,feet,rig,book,gamepad,openEyes,sleepEyes};
   return g;
 }
 const bunny=resident('bunny',WAYPOINTS.garden.x,WAYPOINTS.garden.z),bear=resident('bear',WAYPOINTS.living.x,WAYPOINTS.living.z);bear.position.y=WAYPOINTS.living.y;
@@ -295,8 +305,14 @@ for(const [kind,group] of Object.entries({bunny,bear})){
   const config=RESIDENTS[kind];
   const marker=new T.Mesh(new T.RingGeometry(.37,.48,32),new T.MeshBasicMaterial({color:kind==='bunny'?'#d39c8e':'#91ad81',side:T.DoubleSide,transparent:true,opacity:.8}));
   marker.rotation.x=-Math.PI/2;marker.position.y=.045;marker.visible=false;group.add(marker);
-  life[kind]={group,config,node:config.start,step:0,remaining:config.plan[0].seconds,route:[],moving:false,marker};
+  life[kind]={group,config,node:config.start,step:0,remaining:config.plan[0].seconds,route:[],moving:false,marker,poseActive:Boolean(config.plan[0].pose),poseBlend:0};
 }
+const actionPoses={
+  sofaRead:{x:2.25,y:1.23,z:-.78,yaw:0,kind:'sit',exit:'sofaExit',prop:'book'},
+  read:{x:-1,y:1.015,z:.26,yaw:Math.PI,kind:'sit',exit:'studyChairExit',prop:'book'},
+  game:{x:-4.08,y:1.0,z:-.55,yaw:-Math.PI/2,kind:'sit',exit:'computerChairExit',prop:'gamepad'},
+  sleep:{x:-3.96,y:1.78,z:-2.87,yaw:0,kind:'sleep',exit:'bedExit'}
+};
 let paused=false,selected=null;const clock=new T.Clock();let elapsed=0;
 // One full cycle follows the local calendar. The preview button only overrides its target.
 const seasons=[
@@ -409,6 +425,11 @@ function displayLife(kind){
   button.querySelector('em').textContent=state.moving?'路上':placeLabel(target.at);
   if(selected===kind)document.querySelector('#note').textContent=`${state.config.name}：${state.moving?'正在前往'+placeLabel(target.at):target.activity}。`;
 }
+function routeFromState(state,destination){
+  const pose=state.poseActive&&actionPoses[state.config.plan[state.step].pose];
+  state.poseActive=false;
+  return pose?[pose.exit,...routeBetween(pose.exit,destination)]:routeBetween(state.node,destination);
+}
 function updateLife(state,dt){
   if(state.route.length){
     state.moving=true;
@@ -420,8 +441,9 @@ function updateLife(state,dt){
   }
   state.remaining-=dt;
   if(state.remaining>0)return;
-  state.step=(state.step+1)%state.config.plan.length;
-  state.route=routeBetween(state.node,state.config.plan[state.step].at);
+  const nextStep=(state.step+1)%state.config.plan.length;
+  state.route=routeFromState(state,state.config.plan[nextStep].at);
+  state.step=nextStep;
   state.moving=state.route.length>0;
   if(!state.moving)state.remaining=state.config.plan[state.step].seconds;
   displayLife(state.config===RESIDENTS.bunny?'bunny':'bear');
@@ -462,7 +484,7 @@ function beginSocial(planned=false,place='garden'){
   if(social.phase!=='idle')return;
   social.planned=planned;social.place=place;social.phase=planned?'travel':'talk';social.timer=0;social.line=0;
   social.script=socialScripts[social.index++%socialScripts.length];
-  if(planned){for(const state of Object.values(life)){state.route=routeBetween(state.node,'garden');state.moving=state.route.length>0}socialStatus('正在前往院子相聚')}
+  if(planned){for(const state of Object.values(life)){state.route=routeFromState(state,'garden');state.moving=state.route.length>0}socialStatus('正在前往院子相聚')}
   else activateSocial();
 }
 function activateSocial(){
@@ -483,7 +505,7 @@ function updateSocial(dt){
   if(social.phase==='idle'){
     const a=life.bunny,b=life.bear,distance=a.group.position.distanceTo(b.group.position);
     const safe=!['bedroom','bathroom'].includes(a.node)&&!['bedroom','bathroom'].includes(b.node);
-    if(!a.moving&&!b.moving&&safe&&distance>=1.4&&distance<2.1&&elapsed>=social.nextAt)beginSocial(false,a.node);
+    if(!a.moving&&!b.moving&&!a.poseActive&&!b.poseActive&&safe&&distance>=1.4&&distance<2.1&&elapsed>=social.nextAt)beginSocial(false,a.node);
     else if(elapsed>=social.nextAt)beginSocial(true,'garden');
     return;
   }
@@ -499,7 +521,7 @@ function updateSocial(dt){
     logDialogue(kind,text);
   }
   if(social.timer>social.script.lines.length*3.7+2){
-    social.phase='idle';social.nextAt=elapsed+55;socialProps(false);
+    social.phase='idle';social.nextAt=elapsed+90;socialProps(false);
     for(const state of Object.values(life)){state.remaining=0;state.moving=false}
     document.querySelector('#note').textContent='小院里又添了一段温暖的小故事。';
   }
@@ -554,14 +576,36 @@ renderer.setAnimationLoop(()=>{
     updateSocial(dt);
   }
   for(const [kind,state] of Object.entries(life)){
-    const phase=elapsed*(state.moving?10:2)+(kind==='bear'?1:0),pace=state.moving?.03:.015;
+    const action=!state.moving&&social.phase==='idle'?actionPoses[state.config.plan[state.step].pose]:null;
+    state.poseActive=Boolean(action);
+    const blend=Math.min(1,dt*3),targetBlend=action?1:0;
+    state.poseBlend=T.MathUtils.lerp(state.poseBlend,targetBlend,blend);
+    const {head,arms,feet,rig,book,gamepad,openEyes,sleepEyes}=state.group.userData;
+    if(action){
+      state.group.position.x=T.MathUtils.lerp(state.group.position.x,action.x,Math.min(1,dt*2));
+      state.group.position.y=T.MathUtils.lerp(state.group.position.y,action.y,Math.min(1,dt*2));
+      state.group.position.z=T.MathUtils.lerp(state.group.position.z,action.z,Math.min(1,dt*2));
+      const turn=((action.yaw-state.group.rotation.y+Math.PI*3)%(Math.PI*2))-Math.PI;
+      state.group.rotation.y+=turn*Math.min(1,dt*3);
+    }
+    rig.rotation.x=T.MathUtils.lerp(rig.rotation.x,action?.kind==='sleep'?-Math.PI/2:0,blend);
+    rig.position.y=action?.kind==='sleep'?Math.sin(elapsed*1.8)*.008:0;
+    book.visible=Boolean(action?.prop==='book'&&state.poseBlend>.35);
+    gamepad.visible=Boolean(action?.prop==='gamepad'&&state.poseBlend>.35);
+    const sleeping=action?.kind==='sleep'&&state.poseBlend>.78;
+    for(const eye of openEyes)eye.visible=!sleeping;
+    for(const eye of sleepEyes)eye.visible=sleeping;
+    const phase=elapsed*(state.moving?10:2)+(kind==='bear'?1:0),pace=action?.kind==='sleep'?.006:state.moving?.03:.015;
     state.group.scale.y=1+Math.sin(phase)*pace;
-    const {head,arms,feet}=state.group.userData;
-    head.rotation.z=Math.sin(elapsed*1.3+(kind==='bear'?1:0))*.035;
-    head.rotation.y=Math.sin(elapsed*.65+(kind==='bear'?1.4:0))*.08;
+    head.rotation.z=Math.sin(elapsed*1.3+(kind==='bear'?1:0))*(sleeping?.008:.035);
+    head.rotation.y=Math.sin(elapsed*.65+(kind==='bear'?1.4:0))*(sleeping?.015:.08);
     for(let i=0;i<2;i++){
-      const swing=state.moving?Math.sin(phase+i*Math.PI)*.26:Math.sin(elapsed*1.5+i*Math.PI)*.025;
-      arms[i].rotation.x=swing;feet[i].rotation.x=state.moving?-swing*.7:0;
+      const swing=state.moving?Math.sin(phase+i*Math.PI)*.26:action?.kind==='sit'?(action.prop?-.7:-.3):action?.kind==='sleep'?-.15:Math.sin(elapsed*1.5+i*Math.PI)*.025;
+      arms[i].rotation.x=T.MathUtils.lerp(arms[i].rotation.x,swing,blend);
+      const sitting=action?.kind==='sit';
+      feet[i].position.y=T.MathUtils.lerp(feet[i].position.y,sitting?-.13:.13,blend);
+      feet[i].position.z=T.MathUtils.lerp(feet[i].position.z,sitting?.4:.02,blend);
+      feet[i].rotation.x=state.moving?-swing*.7:sitting?-.25:0;
     }
   }
   const breeze=Math.sin(elapsed*.36)*.65+Math.sin(elapsed*.71+1.2)*.35;

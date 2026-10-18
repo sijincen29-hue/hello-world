@@ -22,7 +22,11 @@ export const WAYPOINTS = {
   workPassage:{x:-3.5,z:-1.23,y:.66,neighbors:['workLane','bedroomApproach']},
   bedroomApproach:{x:-4,z:-1.23,y:.66,neighbors:['workPassage','bedroomDoor']},
   socialLane:{x:.66,z:1.13,y:.66,neighbors:['study','living','bathApproach']},
-  living:{x:1.9,z:1.05,y:.66,neighbors:['socialLane']},
+  living:{x:1.33,z:-.25,y:.66,neighbors:['socialLane']},
+  sofaExit:{x:1.33,z:-.25,y:.66,neighbors:['living']},
+  studyChairExit:{x:-1,z:.86,y:.66,neighbors:['study']},
+  computerChairExit:{x:-3.5,z:.35,y:.66,neighbors:['workLane']},
+  bedExit:{x:-4,z:-2.05,y:.66,neighbors:['bedroomDoor']},
   bedroomDoor:{x:-4,z:-1.65,y:.66,neighbors:['bedroomApproach','bedroom']},
   bedroom:{x:-4,z:-2.05,y:.66,neighbors:['bedroomDoor']},
   bathApproach:{x:.66,z:-1.23,y:.66,neighbors:['socialLane','bathDoor','kitchenEntry']},
@@ -38,13 +42,13 @@ export const RESIDENTS = {
     {at:'garden',activity:'照看花草',seconds:10},
     {at:'vegetables',activity:'照料菜地',seconds:11},
     {at:'kitchen',activity:'准备午餐',seconds:11},
-    {at:'study',activity:'读一本绘本',seconds:12},
-    {at:'bedroom',activity:'整理床铺',seconds:10},
+    {at:'study',activity:'坐在椅子上读绘本',pose:'read',seconds:18},
+    {at:'bedroom',activity:'在床上睡午觉',pose:'sleep',seconds:18},
   ]},
   bear:{name:'栗栗',start:'living',speed:.83,plan:[
-    {at:'living',activity:'喝一杯热茶',seconds:11},
-    {at:'computer',activity:'写日记',seconds:13},
-    {at:'study',activity:'安静看书',seconds:12},
+    {at:'living',activity:'坐在沙发上看书',pose:'sofaRead',seconds:14},
+    {at:'computer',activity:'坐着玩游戏',pose:'game',seconds:18},
+    {at:'study',activity:'在书房挑书',seconds:12},
     {at:'kitchen',activity:'烤小点心',seconds:11},
     {at:'garden',activity:'到院子散步',seconds:12},
   ]},
@@ -64,4 +68,3 @@ export function routeBetween(from,to){
   const route=[];for(let node=to;node!==from;node=previous.get(node))route.unshift(node);
   return route;
 }
-
