@@ -1,5 +1,5 @@
 import * as T from 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js';
-import {ROOMS,WAYPOINTS,RESIDENTS,routeBetween} from './world-data.js?v=5';
+import {ROOMS,WAYPOINTS,RESIDENTS,routeBetween} from './world-data.js?v=6';
 const host=document.querySelector('#scene');
 const scene=new T.Scene();scene.background=new T.Color('#f5f3e9');
 const renderer=new T.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.3;host.appendChild(renderer.domElement);
@@ -35,12 +35,12 @@ function roomLabel(label,x,z){const c=document.createElement('canvas');c.width=2
 // reading nook and computer corner have no enclosing partition walls.
 box(-1,2.2,-4.8,9.2,3.3,.18,colors.wall);box(-5.5,1.85,-1.6,.16,2.6,6.5,colors.wall);box(3.5,1.02,-1.7,.15,.8,6.4,colors.wall);
 function screenX(x,z1,z2,height=1.55){box(x,.65+height/2,(z1+z2)/2,.12,height,z2-z1,'#d9c9a9')}
-function screenZ(z,x1,x2,height=1.4){box((x1+x2)/2,.65+height/2,z,x2-x1,height,.12,'#d9c9a9')}
+function screenZ(z,x1,x2,height=1.55){box((x1+x2)/2,.65+height/2,z,x2-x1,height,.12,'#d9c9a9')}
 // A small sleeping alcove and bathroom share one quiet wall, with wide entries.
-screenX(-2.5,-4.7,-1.78,1.65);
-screenX(.5,-4.7,-1.78,1.6);
-screenZ(-1.66,-5.42,-4.65);screenZ(-1.66,-3.35,-2.55);
-screenZ(-1.66,-2.44,-1.54,1.65);screenZ(-1.66,-.46,.44,1.65);
+screenX(-2.5,-4.82,-1.6);
+screenX(.5,-4.82,-1.6);
+screenZ(-1.66,-5.55,-4.65);screenZ(-1.66,-3.35,-2.45);
+screenZ(-1.66,-2.55,-1.65);screenZ(-1.66,-.35,.55);
 // Open shelf and runner mark the work/reading edge without closing the view.
 const runner=rounded(-1.05,.669,.2,2.05,.028,1.55,'#e6d9be');runner.rotation.y=-.07;
 box(-1,3.88,-4.8,9.4,.12,.26,'#c0a47b');box(-5.5,3.2,-1.6,.23,.12,6.6,'#c0a47b');
@@ -67,17 +67,17 @@ for(const x of [1.03,1.98,2.93]){rounded(x,1.13,-4.15,.9,.92,1.08,'#94ae9b');box
 box(1.03,1.71,-4.13,.61,.025,.58,'#b5cbc3');cyl(1.03,1.89,-4.34,.03,.29,'#c3b68e');
 box(2,1.72,-4.12,.72,.04,.64,'#5e6557');for(const x of [1.78,2.22])for(const z of [-4.31,-3.94])cyl(x,1.75,z,.12,.025,'#abb1a2');cyl(2,1.9,-4.12,.2,.24,'#e5c7a1');glow(ball(2.7,2.35,-4.32,.16,.085,.11,'#fff1d1'));lamp(2.4,2.13,-3.95,6,3.1);
 rounded(3.05,1.63,-2.75,.65,1.93,.7,'#f5ebd6');box(2.76,1.7,-2.37,.04,.34,.05,'#adb7a1');
- rounded(1.9,1.05,-2.65,1.3,.64,.68,'#b88f69');box(1.9,1.41,-2.65,1.38,.09,.76,'#f6e7c9');
+ rounded(2.05,1.05,-2.65,1.05,.64,.68,'#b88f69');box(2.05,1.41,-2.65,1.13,.09,.76,'#f6e7c9');
  // The breakfast counter is the soft threshold between cooking and lounging.
  cyl(2.35,.92,-2.08,.23,.46,'#c5a478');cyl(2.35,1.18,-2.08,.27,.07,'#e6d5b4');
- cyl(1.42,1.52,-2.63,.16,.035,'#f9f4e6');ball(1.42,1.55,-2.63,.07,.06,.07,'#d49b76');
+ cyl(1.73,1.52,-2.63,.16,.035,'#f9f4e6');ball(1.73,1.55,-2.63,.07,.06,.07,'#d49b76');
  box(1.95,2.3,-4.5,1.6,.07,.27,'#c19d74');for(const x of [1.55,1.92,2.29])cyl(x,2.43,-4.5,.08,.19,'#e8d9b7');
 }
 // Computer room: desk, luminous monitor, keyboard, tower and swivel chair.
 function furnishComputer(){
-rounded(-4.15,1.24,-1.04,1.95,.15,.75,'#a98263');for(const x of [-4.9,-3.4])box(x,.95,-1.03,.1,.58,.65,'#987356');
-rounded(-4.18,1.74,-1.25,.87,.68,.1,'#434f51');glow(box(-4.18,1.74,-1.18,.73,.53,.02,'#80a9a1'),'#a9d9d5');box(-4.18,1.47,-1.22,.08,.24,.08,'#6d7771');box(-4.18,1.34,-.78,.65,.035,.2,'#ddd8bc');
-rounded(-3.18,1.03,-1.09,.35,.55,.47,'#5d706d');ball(-3.04,1.13,-.84,.045,.045,.02,'#b6d9c5');cyl(-4.18,.87,.04,.37,.1,'#a8b8ab');cyl(-4.18,.72,.04,.08,.27,'#b9a587');rounded(-4.18,1.2,.29,.75,.57,.18,'#9cad9d');
+rounded(-4.7,1.24,-.5,1.4,.15,.65,'#a98263');for(const x of [-5.25,-4.15])box(x,.95,-.5,.1,.58,.55,'#987356');
+rounded(-4.7,1.74,-.72,.82,.68,.1,'#434f51');glow(box(-4.7,1.74,-.65,.68,.53,.02,'#80a9a1'),'#a9d9d5');box(-4.7,1.47,-.69,.08,.24,.08,'#6d7771');box(-4.7,1.34,-.25,.65,.035,.2,'#ddd8bc');
+rounded(-4.12,1.03,-.48,.32,.55,.42,'#5d706d');ball(-3.98,1.13,-.25,.045,.045,.02,'#b6d9c5');cyl(-4.7,.87,.35,.34,.1,'#a8b8ab');cyl(-4.7,.72,.35,.08,.27,'#b9a587');rounded(-4.7,1.2,.58,.72,.57,.18,'#9cad9d');
 box(-5.18,1.36,-.1,.16,1.36,1.14,'#b9946e');for(const z of [-.47,-.04,.39])box(-5.05,1.14,z,.2,.06,.31,'#e7d2ac');
 }
 // Study: a bookshelf, open book, writing desk and warm reading lamp.
@@ -85,14 +85,14 @@ function furnishStudy(){
 rounded(-1,1.06,-.62,1.52,.16,.83,'#c49b70');for(const x of [-1.55,-.45])box(x,.88,-.62,.1,.48,.72,'#aa805b');
 for(const x of [-1.26,-.74])box(x,1.16,-.56,.42,.025,.29,'#fff4df');box(-1,1.18,-.56,.018,.04,.29,'#be9b74');
 cyl(-.43,1.34,-.98,.04,.4,'#bd9b68');glow(mesh(new T.ConeGeometry(.22,.32,18),colors.cream,-.43,1.66,-.98));lamp(-.43,1.55,-.98,8,3.1);
-rounded(-1,.81,.46,.57,.1,.54,'#ad9d83');box(-1,1.1,.66,.57,.58,.11,'#ab9d85');
+rounded(-1,.81,.26,.57,.1,.54,'#ad9d83');box(-1,1.1,.46,.57,.58,.11,'#ab9d85');
 box(-2.29,1.38,-.13,.3,1.35,1.65,'#b68f68');for(const y of [.85,1.33,1.8]){box(-2.07,y,-.13,.15,.055,1.58,'#d7b789');for(let i=0;i<6;i++)box(-2.02,y+.15,-.77+i*.25,.1,.29,.1,['#9aa890','#d4a895','#c5bd96'][i%3])}
 }
 // Living room: sofa, low table, rug, plant and a small tea tray.
 function furnishLiving(){
-const loungeRug=cyl(2,.675,.18,1.08,.027,'#dbceb0');loungeRug.scale.z=.82;
-rounded(2,1.03,-.79,1.75,.58,.72,colors.green);rounded(2,1.39,-1.14,1.8,.68,.22,colors.green);for(const x of [1.23,2.77])rounded(x,1.22,-.78,.25,.57,.83,colors.green);for(const x of [1.62,2.38])rounded(x,1.33,-.77,.64,.15,.61,'#b9c9ad');
-rounded(2,1.02,.28,1.1,.13,.64,'#c79a6c');for(const x of [1.6,2.4])for(const z of [.09,.47])cyl(x,.84,z,.055,.34,'#a97c53');cyl(2.22,1.17,.26,.13,.18,'#fff4de');box(1.74,1.12,.26,.31,.04,.37,'#9caa91');
+const loungeRug=cyl(2.2,.675,.18,1.02,.027,'#dbceb0');loungeRug.scale.z=.82;
+rounded(2.25,1.03,-.79,1.55,.58,.72,colors.green);rounded(2.25,1.39,-1.14,1.6,.68,.22,colors.green);for(const x of [1.58,2.92])rounded(x,1.22,-.78,.25,.57,.83,colors.green);for(const x of [1.9,2.6])rounded(x,1.33,-.77,.55,.15,.61,'#b9c9ad');
+rounded(2.2,1.02,.28,1.05,.13,.64,'#c79a6c');for(const x of [1.82,2.58])for(const z of [.09,.47])cyl(x,.84,z,.055,.34,'#a97c53');cyl(2.42,1.17,.26,.13,.18,'#fff4de');box(1.94,1.12,.26,.31,.04,.37,'#9caa91');
 rounded(2.72,.86,1.25,.56,.35,.42,'#c8a47b');box(2.72,1.08,1.25,.4,.045,.28,'#e6d9bc');
 rounded(3.13,.89,.92,.38,.47,.38,'#a78260');cyl(3.13,1.37,.92,.035,.48,'#c3a778');glow(ball(3.13,1.7,.92,.24,.17,.24,'#ffe5b9'));lamp(3.13,1.72,.92,9,3.2);
 function plant(x,y,z){cyl(x,y+.2,z,.19,.36,'#c28f73',scene,.27);for(let i=0;i<6;i++){const a=i*Math.PI/3;const leaf=ball(x+Math.cos(a)*.15,y+.61,z+Math.sin(a)*.15,.1,.32,.1,'#6f9271');leaf.rotation.z=Math.cos(a)*.6}}plant(3.1,.66,-.15);
@@ -256,5 +256,6 @@ renderer.setAnimationLoop(()=>{
   camera.zoom+=((selected?2.05:1)-camera.zoom)*Math.min(1,dt*2.5);camera.updateProjectionMatrix();
   updateLighting(Math.min(frameDt,.5));renderer.render(scene,camera);
 });
+
 
 
