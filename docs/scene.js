@@ -122,6 +122,8 @@ function tree(x,z,s=1,seed=0){
   const bark='#9f805c';
   twig([0,0,0],[.045,.82,-.025],.23,.19,bark,trunk);
   twig([.045,.82,-.025],[-.025,1.37,.035],.19,.13,bark,trunk);
+  twig([.02,1.08,0],[-.45,1.7,.12],.12,.042,bark,trunk);
+  twig([-.01,1.18,.02],[.5,1.73,-.12],.11,.04,bark,trunk);
   const crown=new T.Group();crown.position.set(-.025,1.34,.035);trunk.add(crown);
   twig([0,0,0],[.055,.76,-.025],.13,.065,bark,crown);
   for(let i=0;i<7;i++){
@@ -159,7 +161,7 @@ function tree(x,z,s=1,seed=0){
   const foliageTexture=new T.CanvasTexture(foliageCanvas);foliageTexture.colorSpace=T.SRGBColorSpace;
   const canopy=new T.Mesh(canopyGeometry,new T.MeshStandardMaterial({map:foliageTexture,roughness:1}));
   canopy.position.set(.02,.79,0);canopy.castShadow=true;canopy.receiveShadow=true;crown.add(canopy);
-  canopy.scale.set(1.04,.72,.94);
+  canopy.scale.set(1.12,.67,.94);
   const leafCount=100,leaves=new T.InstancedMesh(leafGeometry,leafMaterial,leafCount);
   leaves.castShadow=false;leaves.receiveShadow=true;leaves.frustumCulled=false;crown.add(leaves);
   const dummy=new T.Object3D(),up=new T.Vector3(0,1,0);
@@ -169,7 +171,7 @@ function tree(x,z,s=1,seed=0){
     const depth=.78+random()*.2;
     const nx=Math.cos(angle)*ring,ny=u,nz=Math.sin(angle)*ring;
     const skirt=ny<0?1-ny*.06:1;
-    dummy.position.set(.02+nx*1.04*depth*skirt,.79+ny*.72*depth*(ny<0?.72:1),nz*.94*depth*skirt);
+    dummy.position.set(.02+nx*1.12*depth*skirt,.79+ny*.67*depth*(ny<0?.72:1),nz*.94*depth*skirt);
     const direction=new T.Vector3(nx*.7+(random()-.5)*.3,.42+ny*.48,nz*.7+(random()-.5)*.3).normalize();
     dummy.quaternion.setFromUnitVectors(up,direction);dummy.rotateY(random()*Math.PI*2);
     const size=.12+random()*.07;dummy.scale.set(size*.78,size,size*.78);dummy.updateMatrix();
