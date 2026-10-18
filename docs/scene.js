@@ -106,32 +106,62 @@ for(const room of ROOMS)FURNISHERS[room.id]();
 rounded(-1,.4,1.9,2.3,.32,.85,'#c8ab83');rounded(-1,.2,2.4,2.6,.25,.65,'#d8bea0');for(let i=0;i<5;i++){const stone=cyl(-1+Math.sin(i)*.16,.18,2.9+i*.65,.44,.12,'#ded6b9');stone.scale.z=.69;}
 // Each crop has a rooted stem and a separate leafy crown, so only the soft parts sway.
 for(let bx of [3.5,5.3]){rounded(bx,.18,3.1,1.5,.28,2.8,'#b48b60');box(bx,.34,3.1,1.27,.04,2.57,'#795b40');for(let z=2.2;z<4.4;z+=.6)for(let x of [bx-.32,bx+.32]){const top=new T.Group();top.position.set(x,.41,z);scene.add(top);if(bx<4){ball(0,.13,0,.18,.17,.18,'#a8bc7e',top);for(let k=0;k<6;k++){const a=k*Math.PI/3;const leaf=ball(Math.cos(a)*.15,.12,Math.sin(a)*.15,.11,.08,.19,k%2?'#85a66b':'#94b276',top);leaf.rotation.y=a;leaf.rotation.z=Math.cos(a)*.35}}else{mesh(new T.ConeGeometry(.075,.2,10),'#d89355',x,.38,z);for(let k=0;k<4;k++){const a=k*Math.PI/2;twig([0,0,0],[Math.cos(a)*.1,.26,Math.sin(a)*.1],.017,.006,'#6d9461',top);const leaf=ball(Math.cos(a)*.13,.26,Math.sin(a)*.13,.04,.19,.055,'#83a66e',top);leaf.rotation.z=-Math.cos(a)*.32}}wind(top,x+z,.04)}}
-// Broad overlapping canopy lobes read as a tree at the fixed camera distance.
-// Branches support the crown from below; quiet surface leaves add texture without a bead-like silhouette.
+// A leaf-shaped mesh is reused for the whole crown. Its folded center catches the warm light.
+const leafGeometry=new T.BufferGeometry();
+leafGeometry.setAttribute('position',new T.Float32BufferAttribute([
+  0,0,0, -.42,.27,0, -.49,.61,0, 0,1,0,
+  .49,.61,0, .42,.27,0, 0,.52,.08
+],3));
+leafGeometry.setIndex([0,1,6,1,2,6,2,3,6,3,4,6,4,5,6,5,0,6]);
+leafGeometry.computeVertexNormals();
+const leafMaterial=new T.MeshStandardMaterial({color:'#ffffff',roughness:1,side:T.DoubleSide});
 function tree(x,z,s=1,seed=0){
+  let randomState=(Math.floor(seed*10000)+9317)>>>0;
+  const random=()=>((randomState=(1664525*randomState+1013904223)>>>0)/4294967296);
   const trunk=new T.Group();trunk.position.set(x,.26,z);trunk.scale.setScalar(s);scene.add(trunk);
-  twig([0,0,0],[0,1.86,0],.23,.12,'#a38158',trunk);
-  const crown=new T.Group();crown.position.y=1.36;trunk.add(crown);
-  const lobes=[
-    [0,.72,0,.82,.69,.74,'#83a474'],
-    [-.58,.54,.13,.60,.54,.58,'#789b70'],
-    [.55,.53,.16,.63,.53,.58,'#91ad7e'],
-    [-.14,.58,-.52,.62,.52,.51,'#86a878'],
-    [.2,.94,.32,.55,.48,.5,'#9ab586']
-  ];
-  for(let i=1;i<lobes.length;i++){
-    const [lx,ly,lz]=lobes[i];
-    twig([0,.08,0],[lx*.78,ly*.78,lz*.78],.085,.025,'#a38158',crown);
+  const bark='#9f805c';
+  twig([0,0,0],[.045,.82,-.025],.23,.19,bark,trunk);
+  twig([.045,.82,-.025],[-.025,1.37,.035],.19,.13,bark,trunk);
+  const crown=new T.Group();crown.position.set(-.025,1.34,.035);trunk.add(crown);
+  twig([0,0,0],[.055,.76,-.025],.13,.065,bark,crown);
+  for(let i=0;i<7;i++){
+    const angle=seed+i*2.399,reach=.65+random()*.3;
+    const dx=Math.cos(angle)*reach,dz=Math.sin(angle)*reach;
+    const start=[0,(i%3)*.1,0],bend=[dx*.48,.29+(i%2)*.06,dz*.48],tip=[dx,.62+random()*.2,dz];
+    twig(start,bend,.09,.055,bark,crown);
+    twig(bend,tip,.055,.022,'#a88a64',crown);
+    for(const side of [-1,1]){
+      const a=angle+side*.34,outer=[dx+Math.cos(a)*.25,tip[1]+.16+random()*.12,dz+Math.sin(a)*.25];
+      twig(tip,outer,.024,.008,'#a88a64',crown);
+    }
   }
-  for(const [lx,ly,lz,rx,ry,rz,color] of lobes)ball(lx,ly,lz,rx,ry,rz,color,crown);
-  for(let i=0;i<9;i++){
-    const a=i*2.4+seed,side=i%2?-1:1;
-    const leaf=ball(Math.cos(a)*(.62+.12*(i%3)),.72+.15*(i%3),Math.sin(a)*.58+.33,.12,.07,.21,i%2?'#9bb584':'#8eac7b',crown);
-    leaf.rotation.y=a;leaf.rotation.z=side*.18;
+  // One gently uneven crown is the visual mass; leaves break its edge into foliage.
+  const canopyGeometry=new T.SphereGeometry(1,32,20),positions=canopyGeometry.attributes.position;
+  for(let i=0;i<positions.count;i++){
+    const px=positions.getX(i),py=positions.getY(i),pz=positions.getZ(i);
+    const uneven=1+.055*Math.sin(px*7+py*4+seed)*Math.sin(pz*5-py*3)+.035*Math.sin(py*10+pz*6+seed);
+    positions.setXYZ(i,px*uneven,py*uneven,pz*uneven);
   }
-  for(let i=0;i<3;i++)ball(Math.cos(i*2.1+seed)*.48,.28,Math.sin(i*2.1+seed)*.42,.10,.12,.10,'#dfb17d',crown);
-  wind(crown,seed,.018);
-  for(let i=0;i<3;i++){const a=i*2.1+seed;twig([Math.cos(a)*.08,0,Math.sin(a)*.08],[Math.cos(a)*.28,.18,Math.sin(a)*.28],.06,.015,'#9c7956',trunk)}
+  canopyGeometry.computeVertexNormals();
+  const canopy=mesh(canopyGeometry,['#809f70','#84a273','#7e9e70'][Math.floor(seed)%3],.02,.79,0,crown);
+  canopy.scale.set(1.02,.72,.91);
+  const leafCount=190,leaves=new T.InstancedMesh(leafGeometry,leafMaterial,leafCount);
+  leaves.castShadow=false;leaves.receiveShadow=true;leaves.frustumCulled=false;crown.add(leaves);
+  const dummy=new T.Object3D(),up=new T.Vector3(0,1,0);
+  const palette=['#91ae7c','#a0b989','#83a775','#94b480'];
+  for(let i=0;i<leafCount;i++){
+    const angle=random()*Math.PI*2,u=-.62+random()*1.58,ring=Math.sqrt(1-u*u);
+    const depth=.84+random()*.21;
+    const nx=Math.cos(angle)*ring,ny=u,nz=Math.sin(angle)*ring;
+    dummy.position.set(.02+nx*1.02*depth,.79+ny*.72*depth,nz*.91*depth);
+    const direction=new T.Vector3(nx*.7+(random()-.5)*.3,.42+ny*.48,nz*.7+(random()-.5)*.3).normalize();
+    dummy.quaternion.setFromUnitVectors(up,direction);dummy.rotateY(random()*Math.PI*2);
+    const size=.19+random()*.11;dummy.scale.set(size*.78,size,size*.78);dummy.updateMatrix();
+    leaves.setMatrixAt(i,dummy.matrix);leaves.setColorAt(i,new T.Color(palette[Math.floor(random()*palette.length)]));
+  }
+  leaves.instanceMatrix.needsUpdate=true;leaves.instanceColor.needsUpdate=true;
+  wind(crown,seed,.014);
+  for(let i=0;i<3;i++){const a=i*2.1+seed;twig([Math.cos(a)*.08,0,Math.sin(a)*.08],[Math.cos(a)*.3,.18,Math.sin(a)*.3],.06,.014,'#987650',trunk)}
 }
 tree(-5,3,1.1,.2);tree(5.6,-3.4,1.05,1.6);tree(5.5,-.5,.8,3.1);
 function fence(x,z,axis,length){for(let i=0;i<=length;i+=.7){const px=x+(axis==='x'?i:0),pz=z+(axis==='z'?i:0);rounded(px,.65,pz,.16,1.1,.16,'#eee0bc');ball(px,1.2,pz,.12,.1,.12,'#eee0bc')}for(let y of [.45,.92])box(x+(axis==='x'?length/2:0),y,z+(axis==='z'?length/2:0),axis==='x'?length:.1,.12,axis==='z'?length:.1,'#e3cea4')}
