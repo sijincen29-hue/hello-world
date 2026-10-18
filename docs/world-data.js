@@ -17,18 +17,19 @@ export const WAYPOINTS = {
   path:{x:-1,z:3.15,y:.22,neighbors:['garden','porch']},
   porch:{x:-1,z:1.85,y:.66,neighbors:['path','study']},
   study:{x:-1,z:1.13,y:.66,neighbors:['porch','computer','socialLane']},
-  computer:{x:-3.65,z:1.13,y:.66,neighbors:['study','workLane']},
-  workLane:{x:-2.8,z:1.13,y:.66,neighbors:['computer','workPassage']},
-  workPassage:{x:-2.8,z:-1.3,y:.66,neighbors:['workLane','bedroomDoor']},
+  computer:{x:-3.55,z:1.13,y:.66,neighbors:['study','workLane']},
+  workLane:{x:-3.5,z:.35,y:.66,neighbors:['computer','workPassage']},
+  workPassage:{x:-3.5,z:-1.23,y:.66,neighbors:['workLane','bedroomApproach']},
+  bedroomApproach:{x:-4,z:-1.23,y:.66,neighbors:['workPassage','bedroomDoor']},
   socialLane:{x:.66,z:1.13,y:.66,neighbors:['study','living','bathApproach']},
   living:{x:2.4,z:.88,y:.66,neighbors:['socialLane']},
-  bedroomDoor:{x:-4,z:-1.65,y:.66,neighbors:['workPassage','bedroom']},
+  bedroomDoor:{x:-4,z:-1.65,y:.66,neighbors:['bedroomApproach','bedroom']},
   bedroom:{x:-4,z:-2.38,y:.66,neighbors:['bedroomDoor']},
   bathApproach:{x:.66,z:-1.23,y:.66,neighbors:['socialLane','bathDoor','kitchenEntry']},
   bathDoor:{x:-1,z:-1.65,y:.66,neighbors:['bathApproach','bathroom']},
   bathroom:{x:-1,z:-2.28,y:.66,neighbors:['bathDoor']},
-  kitchenEntry:{x:.66,z:-1.95,y:.66,neighbors:['bathApproach','kitchen']},
-  kitchen:{x:1.16,z:-2.05,y:.66,neighbors:['kitchenEntry']},
+  kitchenEntry:{x:1.04,z:-1.9,y:.66,neighbors:['bathApproach','kitchen']},
+  kitchen:{x:1.08,z:-2.28,y:.66,neighbors:['kitchenEntry']},
 };
 
 // A deterministic daily loop is useful before adding AI: the viewer can already observe a real state change.
@@ -63,3 +64,4 @@ export function routeBetween(from,to){
   const route=[];for(let node=to;node!==from;node=previous.get(node))route.unshift(node);
   return route;
 }
+
