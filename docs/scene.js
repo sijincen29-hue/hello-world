@@ -368,6 +368,94 @@ function updateLife(state,dt){
   if(!state.moving)state.remaining=state.config.plan[state.step].seconds;
   displayLife(state.config===RESIDENTS.bunny?'bunny':'bear');
 }
+const socialScripts=[
+  {title:'在院里分享点心',lines:[['bunny','栗栗，今天的点心是什么味道？'],['bear','是烤栗子味，留了最大的一块给你。'],['bunny','那我拿刚摘的菜来交换！'],['bear','成交。我们坐在这里慢慢吃吧。']]},
+  {title:'一起照看菜地',lines:[['bear','这排菜苗长高了好多。'],['bunny','昨天浇过水，今天轮到松土啦。'],['bear','我来帮你拿小铲子。'],['bunny','有你帮忙，菜地一下就整理好了！']]},
+  {title:'傍晚的小院闲聊',lines:[['bunny','今天的云像一只软软的小熊。'],['bear','我觉得更像刚出炉的面包。'],['bunny','那我们都猜对了一半。'],['bear','再看一会儿吧，天空还会变颜色。']]},
+  {title:'交换阅读心得',lines:[['bear','你那本绘本看到结尾了吗？'],['bunny','看到了，最后他们一起种了一棵树。'],['bear','真好。下次我们也一起种点什么。'],['bunny','那就从窗边的小花开始！']]}
+];
+const historyKey='mossy-home-dialogue-v1';let dialogueHistory=[];
+try{const saved=JSON.parse(localStorage.getItem(historyKey)||'[]');if(Array.isArray(saved))dialogueHistory=saved.filter(entry=>entry&&typeof entry.text==='string'&&typeof entry.kind==='string').slice(-80)}catch{}
+const dialogueList=document.querySelector('#dialogue-list'),dialoguePanel=document.querySelector('#dialogue-panel');
+function renderDialogue(){
+  dialogueList.replaceChildren();
+  if(!dialogueHistory.length){const empty=document.createElement('p');empty.className='dialogue-empty';empty.textContent='小院还很安静。等两位居民相遇，故事就会从这里开始。';dialogueList.append(empty);return}
+  for(const entry of dialogueHistory){
+    if(entry.kind==='event'){const row=document.createElement('p');row.className='dialogue-event';row.textContent=`✿ ${entry.text} · ${entry.time}`;dialogueList.append(row);continue}
+    const row=document.createElement('div');row.className=`dialogue-line ${entry.kind}`;
+    const avatar=document.createElement('span');avatar.className='dialogue-avatar';avatar.textContent=entry.kind==='bunny'?'🐰':'🐻';
+    const body=document.createElement('div');body.className='dialogue-body';const name=document.createElement('b');name.textContent=entry.kind==='bunny'?'米米':'栗栗';
+    const time=document.createElement('time');time.textContent=entry.time;const line=document.createElement('p');line.textContent=entry.text;
+    body.append(time,name,line);row.append(avatar,body);dialogueList.append(row);
+  }
+  dialogueList.scrollTop=dialogueList.scrollHeight;
+}
+function logDialogue(kind,text){dialogueHistory.push({kind,text,time:new Date().toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})});dialogueHistory=dialogueHistory.slice(-80);try{localStorage.setItem(historyKey,JSON.stringify(dialogueHistory))}catch{}renderDialogue()}
+renderDialogue();
+const speechLayer=document.querySelector('#speech-layer'),speechBubbles={};
+for(const kind of ['bunny','bear']){const bubble=document.createElement('div');bubble.className=`speech-bubble ${kind}`;speechLayer.append(bubble);speechBubbles[kind]={element:bubble,until:0}}
+const social={phase:'idle',nextAt:9,index:0,script:null,line:0,timer:0,place:'garden',planned:false};
+const socialMat=rounded(1.9,.173,3.7,1.1,.025,.75,'#eee0ba');socialMat.visible=false;
+const teaTray=cyl(1.9,.21,3.7,.21,.035,'#bd9369');teaTray.visible=false;
+const teaCups=[cyl(1.76,.27,3.7,.065,.09,'#fff1d8'),cyl(2.04,.27,3.7,.065,.09,'#fff1d8')];for(const cup of teaCups)cup.visible=false;
+function socialProps(visible){socialMat.visible=visible;teaTray.visible=visible;for(const cup of teaCups)cup.visible=visible}
+function socialStatus(text){for(const kind of ['bunny','bear']){const button=document.querySelector(`[data-resident="${kind}"]`);button.querySelector('small').textContent=text;button.querySelector('em').textContent=social.place==='garden'?'院子':placeLabel(social.place)}}
+function beginSocial(planned=false,place='garden'){
+  if(social.phase!=='idle')return;
+  social.planned=planned;social.place=place;social.phase=planned?'travel':'talk';social.timer=0;social.line=0;
+  social.script=socialScripts[social.index++%socialScripts.length];
+  if(planned){for(const state of Object.values(life)){state.route=routeBetween(state.node,'garden');state.moving=state.route.length>0}socialStatus('正在前往院子相聚')}
+  else activateSocial();
+}
+function activateSocial(){
+  social.phase='talk';social.timer=0;
+  if(social.planned){life.bunny.group.position.set(1.52,.22,3.18);life.bear.group.position.set(2.28,.22,3.18);life.bunny.group.rotation.y=Math.PI/2;life.bear.group.rotation.y=-Math.PI/2}
+  socialProps(social.place==='garden');
+  socialStatus(social.script.title);
+  logDialogue('event',social.script.title);
+  document.querySelector('#note').textContent=`米米和栗栗：${social.script.title}。`;
+}
+function updateSocial(dt){
+  if(social.phase==='idle'){
+    const a=life.bunny,b=life.bear,distance=a.group.position.distanceTo(b.group.position);
+    const safe=!['bedroom','bathroom'].includes(a.node)&&!['bedroom','bathroom'].includes(b.node);
+    if(!a.moving&&!b.moving&&safe&&distance<1.25&&elapsed>=social.nextAt)beginSocial(false,a.node);
+    else if(elapsed>=social.nextAt)beginSocial(true,'garden');
+    return;
+  }
+  if(social.phase==='travel'){
+    if(!life.bunny.route.length&&!life.bear.route.length)activateSocial();
+    return;
+  }
+  social.timer+=dt;
+  const nextLineAt=social.line*3.7+.5;
+  if(social.line<social.script.lines.length&&social.timer>=nextLineAt){
+    const [kind,text]=social.script.lines[social.line++];
+    speechBubbles[kind].element.textContent=text;speechBubbles[kind].until=elapsed+3.15;
+    logDialogue(kind,text);
+  }
+  if(social.timer>social.script.lines.length*3.7+2){
+    social.phase='idle';social.nextAt=elapsed+55;socialProps(false);
+    for(const state of Object.values(life)){state.remaining=0;state.moving=false}
+    document.querySelector('#note').textContent='小院里又添了一段温暖的小故事。';
+  }
+}
+document.querySelector('#dialogue').onclick=()=>{dialoguePanel.hidden=!dialoguePanel.hidden;document.querySelector('#dialogue').setAttribute('aria-expanded',String(!dialoguePanel.hidden));if(!dialoguePanel.hidden)dialogueList.scrollTop=dialogueList.scrollHeight};
+document.querySelector('#close-dialogue').onclick=()=>{dialoguePanel.hidden=true;document.querySelector('#dialogue').setAttribute('aria-expanded','false')};
+document.querySelector('#meet-now').onclick=()=>{if(social.phase==='idle'){social.nextAt=elapsed;beginSocial(true,'garden')}dialoguePanel.hidden=true;document.querySelector('#dialogue').setAttribute('aria-expanded','false')};
+const bubblePoint=new T.Vector3();
+function updateSpeech(){
+  const w=host.clientWidth,h=host.clientHeight;
+  for(const [kind,{element,until}] of Object.entries(speechBubbles)){
+    const visible=elapsed<until&&until>0;
+    element.classList.toggle('is-visible',visible);
+    if(!visible)continue;
+    const group=life[kind].group;
+    bubblePoint.set(group.position.x,group.position.y+(kind==='bunny'?2.15:1.95),group.position.z).project(camera);
+    element.style.left=`${(bubblePoint.x*.5+.5)*w}px`;
+    element.style.top=`${(-bubblePoint.y*.5+.5)*h}px`;
+  }
+}
 displayLife('bunny');displayLife('bear');
 function resize(){const w=host.clientWidth,h=host.clientHeight;renderer.setSize(w,h);const aspect=w/h;const size=Math.max(9.4,10/aspect);camera.left=-size*aspect;camera.right=size*aspect;camera.top=size;camera.bottom=-size;camera.updateProjectionMatrix();camera.setViewOffset(w,h,aspect>1.2?w*.065:0,-h*.025,w,h)}addEventListener('resize',resize);resize();
 document.querySelector('#loading').remove();
@@ -395,7 +483,12 @@ for(const b of document.querySelectorAll('[data-resident]'))b.onclick=()=>{selec
 document.querySelector('#reset').onclick=()=>{selected=null;for(const state of Object.values(life))state.marker.visible=false;cameraAim.set(0,0,0);camera.zoom=1;camera.position.set(16,23,24);camera.lookAt(0,0,0);resize();document.querySelector('#note').textContent='今天也是适合发呆的好天气。'};
 renderer.setAnimationLoop(()=>{
   const frameDt=clock.getDelta(),dt=Math.min(frameDt,.05);
-  if(!paused){elapsed+=dt;for(const state of Object.values(life))updateLife(state,dt)}
+  if(!paused){
+    elapsed+=dt;
+    if(social.phase==='idle')for(const state of Object.values(life))updateLife(state,dt);
+    else if(social.phase==='travel')for(const state of Object.values(life))if(state.route.length)updateLife(state,dt);
+    updateSocial(dt);
+  }
   for(const [kind,state] of Object.entries(life)){
     const phase=elapsed*(state.moving?10:2)+(kind==='bear'?1:0),pace=state.moving?.03:.015;
     state.group.scale.y=1+Math.sin(phase)*pace;
@@ -414,7 +507,7 @@ renderer.setAnimationLoop(()=>{
   cameraAim.lerp(cameraFocus,Math.min(1,dt*2.5));cameraHome.set(16+cameraAim.x,23+cameraAim.y,24+cameraAim.z);
   camera.position.copy(cameraHome);camera.lookAt(cameraAim);
   camera.zoom+=((selected?2.05:1)-camera.zoom)*Math.min(1,dt*2.5);camera.updateProjectionMatrix();
-  updateLighting(Math.min(frameDt,.5));renderer.render(scene,camera);
+  updateSpeech();updateLighting(Math.min(frameDt,.5));renderer.render(scene,camera);
 });
 
 
